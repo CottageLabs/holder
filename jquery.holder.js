@@ -131,7 +131,7 @@ var searchify = function(opts) {
 // fuzzify the freetext search query terms with elasticsearch fuzzy match signifiers
 var fuzzify = function(querystr, fuzz) {
     var rqs = querystr;
-    if ( querystr.indexOf('*') == -1 && querystr.indexOf('~') == -1 && querystr.indexOf(':') == -1 && querystr.indexOf('"') == -1 ) {
+    if ( querystr.indexOf('*') == -1 && querystr.indexOf('~') == -1 && querystr.indexOf(':') == -1 && querystr.indexOf('"') == -1 && querystr.indexOf('AND') == -1 && querystr.indexOf('OR') == -1 ) {
         var optparts = querystr.split(' ');
         pq = "";
         for ( var oi = 0; oi < optparts.length; oi++ ) {
@@ -202,7 +202,7 @@ function dot(obj, s, val) {
             "type": "GET",
             "datatype": "JSONP",
             
-            // define the starting query here - see ES docs. A filtered query is REQUIRED (empties are stripped for old ES compat)
+            // define the starting query here - see ES docs. A filtered query is REQUIRED (empties are stripped for old ES compatibility)
             "defaultquery": { 
                 "query": {
                     "filtered": {
@@ -228,6 +228,7 @@ function dot(obj, s, val) {
             "operator": "AND", // query operator param for the search box query params
             "fuzzify": "*", // fuzzify the search box query params if they are simple strings. Can be * or ~ or if false it will not run
             "executeonload": true, // run default search as soon as page loads
+            "pushstate": true, // try pushing state to browser URL bar or not
             "after": {} // define callback functions to run after any other function (keyed by function name it should follow)
         };
         
@@ -237,25 +238,31 @@ function dot(obj, s, val) {
                 obj.append(' \
                     <div class="input-group" style="margin-left:-1px;margin-top:-1px;margin-bottom:-6px;margin-right:-2px;"> \
                         <div class="input-group-btn"><button class="btn btn-default holder holder-function" holder-function="prev" alt="previous" title="previous" style="height:50px;font-size:1.6em;"><</button></div> \
-                        <input type="text" class="form-control holder holder-search holder-function" holder-function="add" placeholder="search..." style="font-size:1.6em;height:50px;"> \
+                        <input type="text" class="form-control holder holder-search holder-function" holder-function="suggest" placeholder="search..." style="font-size:1.6em;height:50px;"> \
                         <div class="input-group-btn"><button class="btn btn-default holder holder-function" holder-function="next" alt="next" title="next" style="height:50px;font-size:1.6em;">></button></div> \
                     </div> \
                     <div class="holder holder-filters" style="margin-top:5px;"></div> \
+                    <div class="holder holder-suggestions" style="margin-top:5px;"></div> \
                     <div class="holder holder-results"></div>'
                 );
             }
-            // show what this search runs against (if named)
-            $('.' + options.class + '.holder-search').attr('placeholder',options.what);
-            // bind holder search box suggest if defined
-            if ( typeof options.suggest === 'function' ) options.suggest();
+            // bind the add to the search box explicitly with delay, if there is a suggest function defined
+            if ( typeof options.suggest === 'function' ) {
+                $('.' + options.class + '.holder-search').bindWithDelay('keyup',function(event) { options[$(this).attr('holder-function')](event,$(this)); }, 300);
+                $('.' + options.class + '.holder-search').bind('focus', function(event) { $('.' + options.class + '.holder-options').show('fast'); });
+                $('.' + options.class + '.holder-search').bindWithDelay('blur', function(event) { $('.' + options.class + '.holder-options').hide('fast'); }, 500);
+            }
             // bind holder prev, next, from, to controllers (and any other functions that someone defines)
-            $(document).on('click change', '.' + options.class + '.holder-function', function(event) { options[$(this).attr('holder-function')](event,$(this)); } );
+            $(document).on('click', 'a.' + options.class + '.holder-function', function(event) { options[$(this).attr('holder-function')](event,$(this)); } );
+            $(document).on('click', 'btn.' + options.class + '.holder-function', function(event) { options[$(this).attr('holder-function')](event,$(this)); } );
+            $(document).on('change', 'input.' + options.class + '.holder-function', function(event) { options[$(this).attr('holder-function')](event,$(this)); } );
+            $(document).on('change', 'textarea.' + options.class + '.holder-function', function(event) { options[$(this).attr('holder-function')](event,$(this)); } );
             // TODO bind holder option buttons
             // TODO bind holder sliders (once interpreting sliders into the query has also been done)
-            // bind holder panel toggle functions
+            // bind holder element toggle functions
             $('.' + options.class + '.holder-toggle').on('click',function(e) {
                 e.preventDefault; 
-                $('.' + options.class + '.holder-panel-' + $(this).attr('holder-toggle')).toggle(); 
+                $('.' + options.class + '.holder-' + $(this).attr('holder-toggle')).toggle(); 
             });
             if ( typeof options.after.ui === 'function' ) options.after.ui();
         };
@@ -299,6 +306,8 @@ function dot(obj, s, val) {
         // so if this addition adds something that does not affect the query or results, it may also be necessary to 
         // have a way to represent that on the page (or maybe not...)
         defaults.add = function(event,th) {
+            options.suggesting = false;
+            $('.' + options.class + '.holder-options').hide('fast');
             if (event) event.preventDefault();
             if (!th) th = $(this);
             options.query.from = 0;
@@ -343,20 +352,42 @@ function dot(obj, s, val) {
         };
         
         // this function should bind itself to the search box and do stuff on change, keypress, whatever, that gets suggestions back
-        defaults.suggest = function() {
+        // and there is a default suggestions rendering in the defaults.results below too
+        defaults.suggesting = false; // just tracks the suggesting state
+        defaults.suggest = function(event,th) {
+            if (event) event.preventDefault();
+            if (!th) th = $(this);
+            var code = (event.keyCode ? event.keyCode : event.which);
+            if ( code == 13 ) {
+                if ( options.query.query.filtered.query.bool.must.length !== 0 ) options.query.query.filtered.query.bool.must.splice(-1,1);
+                options.add(event,th);
+            } else {
+                options.suggesting = true;
+                options.query.from = 0;
+                var v = th.val();
+                if ( options.query.query.filtered.query.bool.must.length !== 0 ) options.query.query.filtered.query.bool.must.splice(-1,1);
+                if ( v.length !== 0 ) {
+                    if (options.fuzzify) v = fuzzify(v, options.fuzzify);
+                    options.query.query.filtered.query.bool.must.push({"query_string":{"query": v }});
+                }
+                options.execute();
+            }
             if ( typeof options.after.suggest === 'function' ) options.after.suggest();
         };
-                
+         
+        // a function that prepares the query based on the default, the first time it runs, if there is not one provided
+        defaults.initialisequery = function() {
+            if ( options.aggregations ) options.defaultquery.aggregations = options.aggregations;
+            if ( options.facets ) options.defaultquery.facets = options.facets;
+            options.query = $.extend(true, {}, options.defaultquery);
+        }
+        
         defaults.execute = function(event) {
             // show the loading placeholder (although one is not defined by default, it can be added anywhere to the page)
             $('.' + options.class + '.holder-loading').show();
             $('.' + options.class + '.holder-search').attr('placeholder','searching...');
             // get the current query
-            if (options.query === undefined) {
-                if ( options.aggregations ) options.defaultquery.aggregations = options.aggregations;
-                if ( options.facets ) options.defaultquery.facets = options.facets;
-                options.query = $.extend(true, {}, options.defaultquery);
-            }
+            if (options.query === undefined) options.initialisequery();
             // need a check for empty filters and queries for older versions of ES
             if ( options.query.query.filtered ) {
                 if ( options.query.query.filtered.filter ) {
@@ -387,7 +418,7 @@ function dot(obj, s, val) {
                     //obj = $(this); TODO check if this works with or without passing the this context
                     $('.' + options.class + '.holder-loading').hide();
                     options.response = resp;
-                    options.render();
+                    if (!options.suggesting) options.render(); // don't render the query if it was just a suggestion update
                     if ( typeof options.results === 'function' ) {
                         options.results(options.response);
                     } else if ( typeof options.results === 'object' ) {
@@ -423,8 +454,14 @@ function dot(obj, s, val) {
                 options.query.size < options.response.hits.total ? found += options.query.size : found += options.response.hits.total;
             }
             found += ' of ' + options.response.hits.total;
-            $('.' + options.class + '.holder-search').attr('placeholder',found);
-            if ('pushState' in window.history) window.history.pushState("", "search", '?source=' + JSON.stringify(options.query));
+            $('.' + options.class + '.holder-search').val("").attr('placeholder',found);
+            if ( options.pushstate ) {
+                try {
+                    if ('pushState' in window.history) window.history.pushState("", "search", '?source=' + JSON.stringify(options.query));
+                } catch(err) {
+                    console.log('pushstate not working! Although, note, it seems to fail on local file views these days...' + err);
+                }
+            }
             $('.' + options.class + '.holder-from').val(options.query.from);
             $('.' + options.class + '.holder-to').val(options.query.from + options.query.size);
             // TODO render the query values so they can be edited for next query
@@ -442,7 +479,7 @@ function dot(obj, s, val) {
                     var filter = options.query.query.filtered.filter.bool.must[f];
                     // TODO could be different kinds of filter - term, range, need to deal with each
                     var desc = ''
-                    for (var k in filter.term) desc += /*k + ':' +*/ filter.term[k];
+                    for (var k in filter.term) desc += k + ':' + filter.term[k];
                     var btn = '<a style="margin:5px;" class="btn btn-default ' + options.class + ' holder-function" holder-function="remove" holder-remove="options.query.query.filtered.filter.bool.must.' + f + '"><b>X</b> ' + desc + ' <i class="glyphicon glyphicon-remove></i></a>';
                     $('.' + options.class + '.holder-filters').append(btn);            
                 }
@@ -451,6 +488,20 @@ function dot(obj, s, val) {
         };
         
         defaults.results = {
+            suggestions: function(data) {
+                if (data === undefined) data = options.response;
+                $('.' + options.class + '.holder-suggestions').html('');
+                for ( var f in data.aggregations ) {
+                    var disp = '<div style="float:left;margin-right:10px;max-width:300px;">';
+                    for ( var r in data.aggregations[f].buckets ) {
+                        var j = data.aggregations[f].buckets[r];
+                        disp += searchify({class: options.class, val: j.key + ' (' + j.doc_count + ')', attrs: {function: 'add', filter: f, value: j.key} });
+                        disp += '<br>';
+                    }
+                    disp += '</div>';
+                    $('.' + options.class + '.holder-suggestions').append(disp);
+                }
+            },
             default: function(data) {
                 if (data === undefined) data=options.response;
                 var res = '<div class="row"><div class="col-md-12">';
@@ -471,12 +522,13 @@ function dot(obj, s, val) {
         var obj = $(this);
         return this.each(function() {
             options.ui();
+            if ( $.getUrlVar('source') ) options.query = $.getUrlVar('source');
+            if ( $.getUrlVar('q') ) {
+                if (options.query === undefined) options.initialisequery();
+                options.query.query.filtered.query.bool.must = [{"query_string": { "query": $.getUrlVar('q') } } ];
+            }
             for ( var p in $.getUrlVars() ) {
-                if (p === 'source') {
-                    options.query = $.getUrlVar('source');
-                } else {
-                    options[p] = $.getUrlVar(p);
-                }
+                if (p !== 'source' && p !== 'q') options[p] = $.getUrlVar(p);
                 options.execute();
             }
             if ( options.executeonload && JSON.stringify($.getUrlVars()) === "{}" ) options.execute();

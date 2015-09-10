@@ -5,9 +5,9 @@ var setnodesandlinks = function(data) {
     var visdata = {nodes:[],links:[]}; //,linksindex:{}};
     for ( var i in data.hits.hits ) {
         var rec = data.hits.hits[i]._source !== undefined ? data.hits.hits[i]._source : data.hits.hits[i].fields;
-        rec === undefined ? rec = {} : rec = {bibjson:rec.bibjson};
+        //rec === undefined ? rec = {} : rec = {bibjson:rec.bibjson}; // TODO this should not be set here
         var nrec = {};
-        nrec.key = rec.bibjson.title;
+        nrec.key = rec.fact; // TODO this should not be set here
         nrec.value = 1;
         nrec.field = 'records';
         for ( var an in data.aggregations ) {
@@ -58,10 +58,10 @@ var filter = function(d) {
 // the actual force directed graph function
 var network = function(data) {
     // prep the vis target area
-    $('.holder.holder-vis').html("");
-    var w = $('.holder.holder-vis').width();
-    var h = $('.holder.holder-vis').height();
-    var vis = d3.select(".holder.holder-vis").append("svg:svg").attr("width", w).attr("height", h).attr("pointer-events", "all").append('svg:g').call(d3.behavior.zoom().on("zoom", redraw)).append('svg:g');
+    $('.holder.holder-network').html("");
+    var w = $('.holder.holder-network').width();
+    var h = $('.holder.holder-network').height();
+    var vis = d3.select(".holder.holder-network").append("svg:svg").attr("width", w).attr("height", h).attr("pointer-events", "all").append('svg:g').call(d3.behavior.zoom().on("zoom", redraw)).append('svg:g');
     vis.append('svg:rect').attr('width', w).attr('height', h).attr('fill', 'transparent');
 
     // redraw on zoom

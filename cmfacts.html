@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Holder</title>
+    <meta name="description" content="">
+    <meta name="author" content="Cottage Labs">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <script type="text/javascript" src="lib/jquery-1.10.2.min.js"></script>
+    <script type="text/javascript" src="lib/bootstrap-3.0.3/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="lib/bootstrap-3.0.3/css/bootstrap.min.css">
+    <script type="text/javascript" src="lib/d3/d3.min.js"></script>
+    
+    <script type="text/javascript" src="jquery.holder.js"></script>
+    <script type="text/javascript" src="views/network.js"></script>
+
+    <style> <!-- style for bar chart exampe -->
+    .holder-chart text {
+        fill: white;
+        font: 10px sans-serif;
+        text-anchor: end;
+    }
+    </style>
+
+</head>
+
+<body>
+    
+	<div class="container-fluid wrapper-header-first" style="background-color:white;border-bottom:4px solid #92ce73;margin-bottom:10px;">
+		<div class="container header-first">
+			<div class="navbar-header col-xs-12 col-sm-12 col-lg-4">
+				<a class="navbar-brand" href="http://contentmine.org/" alt="Return to the ContentMine website" title="Return to the ContentMine website"><img src="http://contentmine.org/wp-content/themes/sage_contentmine-manual.org/assets/images/logo-web.png" style="height:100%;margin-left:-20px;"></a>
+			</div>
+			<nav class="col-xs-12 col-sm-12 col-lg-8" role="navigation">
+				<ul class="nav navbar-nav">
+					<li style="margin-right:50px;"><h2 style="font-size:3.4em;margin-top:5px;color:#187c83;">FACTS</h2></li>
+				</ul>
+			</nav>
+		</div>
+	</div>
+
+    <div class="container-fluid" style="margin:5px;">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-default holder holder-ui">
+                    <div class="panel-heading" style="background-color:white;padding:0px;">
+                        <div class="input-group" style="margin-left:-1px;margin-top:-1px;margin-bottom:-6px;margin-right:-2px;">
+                            <div class="input-group-btn">
+                                <button class="btn btn-default holder holder-function" holder-function="prev" alt="previous" title="previous" style="height:50px;font-size:1.6em;"><</button>
+                            </div>
+                            <input type="text" class="form-control holder holder-search holder-function" holder-function="suggest" placeholder="search..." style="font-size:1.6em;height:50px;">
+                            <div class="input-group-btn">
+                                <button class="btn btn-default holder holder-toggle" holder-toggle="options" alt="show/hide search options" title="show/hide search options" style="height:50px;font-size:1.6em;">: :</button>
+                                <button class="btn btn-default holder holder-function" holder-function="next" alt="next" title="next" style="height:50px;font-size:1.6em;">></button>
+                            </div>
+                        </div>
+                        <div class="holder holder-filters" style="margin-top:5px;"></div>
+                    </div>
+                    <div class="panel-body section holder holder-options">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="holder holder-suggestions"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12" style="margin-top:10px;">
+                <div class="holder holder-results" style="height:100%;overflow:scroll;"></div>
+            </div>
+        </div>
+    </div>
+
+    
+<script>
+jQuery(document).ready(function() {
+
+    var result = function(data) {
+        var details = '<div class="col-md-3">';
+        details += '<div class="well" style="padding:5px;height:280px;overflow:hidden;border-color:#187c83;border-width:3px;background-color:#fff;color:#92ce73;">';
+        details += '<p style="font-size:1em;">' + data.pre + '</p>';
+        details += '<p style="color:#187c83;font-weight:bold;font-size:2em;">';
+        details += searchify({class: 'holder', val: data.fact, attrs: {function: 'add', filter: 'fact.exact', value: data.fact} });
+        details += '</p>';
+        details += '<p style="font-size:1em;">' + data.post + '</p>';
+        details += '<p style="font-size:0.8em;color:black;">Processor: ';
+        details += searchify({class: 'holder', val: data.processor, attrs: {function: 'add', filter: 'processor.exact', value: data.processor} });
+        details += '<br>Set: ';
+        details += searchify({class: 'holder', val: data.set, attrs: {function: 'add', filter: 'set.exact', value: data.set} });
+        details += '<br>';
+        details += searchify({class: 'holder', val: data.url, attrs: {function: 'add', filter: 'url.exact', value: data.url} });
+        details += '</p>';
+        details += '</div>';
+        details += '</div>';    
+        return details;
+    }
+    var results = function(data) {
+        var disp = '<div class="row">';
+        for ( var r in data.hits.hits ) {
+            disp += result(data.hits.hits[r]['_source']);
+        }
+        disp += '</div>';
+        $('.holder.holder-results').html(disp);
+    }
+    
+    var suggestions = function(data) {
+        if (data === undefined) data = options.response;
+        $('.holder.holder-suggestions').html('');
+        var ac = 0;
+        var tc = 0;
+        var tcc = [];
+        for ( var f in $('.holder').holder.options.query.aggregations ) {
+            ac += 1;
+            var c = data.aggregations[f].buckets.length;
+            tc += c;
+            tcc.push(c);
+        }
+        var wh = 120;
+        var os = 10;
+        var rc = Math.floor($('.holder.holder-suggestions').width() / (wh+os));
+        var rows = rc - ac;
+        var avg = tc/rc;
+        var tosplit = 0;
+        for ( var e in tcc ) if ( tcc[e] > avg ) tosplit += tcc[e];
+        var spliton = Math.ceil(tosplit/rows);
+        for ( var f in $('.holder').holder.options.query.aggregations ) {
+            var disp = '<div style="float:left;margin-right:' + os + 'px;">';
+            for ( var r in data.aggregations[f].buckets ) {
+                if ( r % spliton == 0 ) disp += '</div><div style="float:left;margin-right:10px;">';
+                var j = data.aggregations[f].buckets[r];
+                disp += '<div class="well" style="padding:5px;height:' + wh + 'px;width:' + wh + 'px;overflow:hidden;border-color:#187c83;border-width:3px;background-color:#fff;font-size:0.8em;position:relative;">';
+                disp += '<div style="position:relative;top:50px;left:0;z-index:1;font-size:4em;text-align:center;font-weight:bold;">';
+                disp += searchify({class: 'holder', val: '<span style="color:#92ce73;">' + j.doc_count + '</span>', attrs: {function: 'add', filter: f, value: j.key} });
+                disp += '</div>';
+                disp += '<div style="position:absolute;top:5px;left:5px;z-index:2;width:' + (wh - 10) + 'px;word-wrap:break-word;">';
+                disp += searchify({class: 'holder', val: '<span style="color:#999;">' + f.replace('.exact','').toUpperCase() + '</span><br>' + j.key, attrs: {function: 'add', filter: f, value: j.key} });
+                disp += '</div>';
+                disp += '</div>';
+            }
+            disp += '</div>';
+            $('.holder.holder-suggestions').append(disp);
+        }
+    };
+
+    
+    var sz = 100;
+    $('body').holder({
+        "what": "search ContentMine Facts",
+        //"url": "http://api.contentmine.org/query/facts",
+        "url": "http://localhost:9200/contentmine/fact/_search",
+        "datatype": "JSON",
+        "results": {
+            "default": results,
+            "suggestions": suggestions,
+        },
+        "size": sz,
+        "aggregations": {
+            "set.exact": { "terms": { "field": "set.exact", "size": sz } },
+            "processor.exact": { "terms": { "field": "processor.exact", "size": sz } },
+            "fact.exact": { "terms": { "field": "fact.exact", "size": sz } },
+            "url.exact": { "terms": { "field": "url.exact", "size": sz } }
+        }
+    }); 
+
+    setTimeout(function() {$('.holder-options').hide(); }, 200);
+
+});
+</script>
+        
+    
+</body>
+</html>
