@@ -435,7 +435,7 @@ function dot(obj, s, val) {
                 }
             };
             if ( options.type != 'POST' ) {
-                opts.url += '?source=' + JSON.stringify(options.query);
+                opts.url += '?source=' + encodeURIComponent(JSON.stringify(options.query));
             } else {
                 // TODO: add the query as data to the ajax opts
             }
