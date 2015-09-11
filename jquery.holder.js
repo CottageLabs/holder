@@ -191,6 +191,14 @@ function dot(obj, s, val) {
     }
 }
 
+function scrollin(elem) {
+    var doctop = $(window).scrollTop();
+    var docbottom = doctop + $(window).height();
+    var top = elem.offset().top;
+    if ( top < 150 ) top = 0;
+    var bottom = top + elem.height();
+    if ( bottom > docbottom || top <  doctop ) $('html, body').animate({ scrollTop: top - 10 }, 200);
+}
 
 (function($){
     $.fn.holder = function(options) {
@@ -306,6 +314,7 @@ function dot(obj, s, val) {
         // so if this addition adds something that does not affect the query or results, it may also be necessary to 
         // have a way to represent that on the page (or maybe not...)
         defaults.add = function(event,th) {
+            scrollin($('.' + options.class + '.holder-search'));
             options.suggesting = false;
             $('.' + options.class + '.holder-options').hide('fast');
             if (event) event.preventDefault();
