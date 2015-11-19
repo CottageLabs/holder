@@ -423,6 +423,7 @@ function scrollin(elem) {
             var opts = {
                 url: options.url, // TODO should maybe add a random param generation to this to ensure no-cache (or check jquery no-cache option)
                 type: options.type,
+                cache: false,
                 //contentType: "application/json; charset=utf-8",
                 dataType: options.datatype,
                 // TODO: may have to pass this context in for the success object to run... check once online
