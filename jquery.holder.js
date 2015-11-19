@@ -6,7 +6,7 @@ a new attempt at an integrated search frontend
 created by Mark MacGillivray - mark@cottagelabs.com
 copyheart 2015
 
-VERSION 0.0.1
+VERSION 0.0.2
 
 what I want is :
 
@@ -21,9 +21,12 @@ then on results retrieved, put them wherever specified
 and display them however specified
 and do any necessary bindings to all UI parts, including re-binding to displayed results sections if necessary
 
+NOTE: this binds functions to objects on the page, particular <a> tags. DO NOT use <button> tags if you build a 
+custom UI and expect binding - buttons get rendered behind the scenes as <a> tags but do not carry over all the 
+same binding actions. So stick with <a> tags.
+
 
 **********************************/
-
 
 // function to bind change on delay, good for text search autosuggest
 (function($) {
@@ -237,6 +240,7 @@ function scrollin(elem) {
             "fuzzify": "*", // fuzzify the search box query params if they are simple strings. Can be * or ~ or if false it will not run
             "executeonload": true, // run default search as soon as page loads
             "pushstate": true, // try pushing state to browser URL bar or not
+            "infinite": false, // when results are scrolled to bottom retrieve the next set of results
             "after": {} // define callback functions to run after any other function (keyed by function name it should follow)
         };
         
@@ -245,9 +249,9 @@ function scrollin(elem) {
             if ( !$('.' + options.class + '.holder-search').length ) {
                 obj.append(' \
                     <div class="input-group" style="margin-left:-1px;margin-top:-1px;margin-bottom:-6px;margin-right:-2px;"> \
-                        <div class="input-group-btn"><button class="btn btn-default holder holder-function" holder-function="prev" alt="previous" title="previous" style="height:50px;font-size:1.6em;"><</button></div> \
+                        <div class="input-group-btn"><a class="btn btn-default holder holder-function" holder-function="prev" alt="previous" title="previous" style="height:50px;font-size:1.6em;" href="#">&lt;</a></div> \
                         <input type="text" class="form-control holder holder-search holder-function" holder-function="suggest" placeholder="search..." style="font-size:1.6em;height:50px;"> \
-                        <div class="input-group-btn"><button class="btn btn-default holder holder-function" holder-function="next" alt="next" title="next" style="height:50px;font-size:1.6em;">></button></div> \
+                        <div class="input-group-btn"><a class="btn btn-default holder holder-function" holder-function="next" alt="next" title="next" style="height:50px;font-size:1.6em;" href="#">&gt;</a></div> \
                     </div> \
                     <div class="holder holder-filters" style="margin-top:5px;"></div> \
                     <div class="holder holder-suggestions" style="margin-top:5px;"></div> \
@@ -262,7 +266,6 @@ function scrollin(elem) {
             }
             // bind holder prev, next, from, to controllers (and any other functions that someone defines)
             $(document).on('click', 'a.' + options.class + '.holder-function', function(event) { options[$(this).attr('holder-function')](event,$(this)); } );
-            $(document).on('click', 'btn.' + options.class + '.holder-function', function(event) { options[$(this).attr('holder-function')](event,$(this)); } );
             $(document).on('change', 'input.' + options.class + '.holder-function', function(event) { options[$(this).attr('holder-function')](event,$(this)); } );
             $(document).on('change', 'textarea.' + options.class + '.holder-function', function(event) { options[$(this).attr('holder-function')](event,$(this)); } );
             // TODO bind holder option buttons
@@ -541,6 +544,9 @@ function scrollin(elem) {
                 options.execute();
             }
             if ( options.executeonload && JSON.stringify($.getUrlVars()) === "{}" ) options.execute();
+            if ( options.infinite ) {
+              // TODO: infinite scroll somehow
+            }
         });
 
     };
