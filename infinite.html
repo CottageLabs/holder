@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Holder</title>
+    <meta name="description" content="">
+    <meta name="author" content="Cottage Labs">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <script type="text/javascript" src="lib/jquery-1.10.2.min.js"></script>
+    <script type="text/javascript" src="lib/bootstrap-3.0.3/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="lib/bootstrap-3.0.3/css/bootstrap.min.css">
+
+    <script type="text/javascript" src="jquery.holder.js"></script>
+
+</head>
+
+<body>
+  <div style="position:fixed;top:0;left:0;right:0;width:100%;z-index:1000;background-color:white;">
+    <div class="container" style="width:1200px;margin-top:20px;">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-default holder holder-ui">
+                    <div class="panel-heading" style="background-color:white;padding:0px;">
+                        <div class="input-group" style="margin-left:-1px;margin-top:-1px;margin-bottom:-6px;margin-right:-2px;">
+                            <input type="text" class="form-control holder holder-search holder-function" holder-function="suggest" placeholder="search..." style="font-size:1.6em;height:50px;">
+                            <div class="input-group-btn">
+                                <a href="/infinite.html" class="btn btn-default" alt="clear all search terms and reset" title="clear all search terms and reset" style="height:50px;font-size:1.6em;">x</a>
+                            </div>
+                        </div>
+<!--
+                        <input type="text" class="form-control holder holder-search holder-function" holder-function="add" placeholder="search..." style="font-size:1.6em;height:50px;margin-left:-1px;margin-top:-1px;margin-bottom:-7px;margin-right:-5px;">
+                        --><div class="holder holder-filters" style="margin-top:5px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+    <div class="container" style="width:1200px;margin-top:100px;">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="holder holder-results"></div>
+            </div>
+        </div>
+    </div>
+
+  <div class="holder holder-loading" style="position:fixed;bottom:5px;left:0;right:0;width:100%;z-index:1000;background-color:white;">
+    <div class="container" style="width:1200px;">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="jumbotron">
+            <h1 style="text-align:center;">RESULTS ARE LOADING</h1>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+    
+<script>
+jQuery(document).ready(function() {
+
+    // *****************************************************************************
+    // THE FUNCTIONS FOR BUILDING THE RESULTS AREA FOR DOAJ EXAMPLE DATA
+
+    var result = function(data) {
+        if ( ! ( 'title' in data ) ) { return '<tr><td>' + JSON.stringify(data) + '</td></tr>'; }
+
+        var url = '';
+        if ( 'identifier' in data ) {
+            for ( var i in data.identifier ) {
+                if ( data.identifier[i].type && data.identifier[i].type.toLowerCase() === 'doi' ) {
+                    url= 'http://dx.doi.org/' + data.identifier[i].id;
+                }
+            }
+        }
+        if ( url === '' && 'link' in data ) {
+            url = data.link[0].url;
+        }
+
+        var details = '<tr><td>';
+        if ( url !== '' ) {
+            details += '<h4><a target="_blank" href="' + url + '">' + data.title + '</a></h4>';	
+        } else {
+            details += '<h4>' + data.title + '</h4>';
+        }
+        details += '<p>';
+        if ( 'author' in data ) {
+            details += 'by ';
+            for ( var i in data.author ) {
+                if ( i != 0 ) {
+                    details += ', ';
+                }
+                details += searchify({class: 'holder', val: data.author[i].name, attrs: {function: 'add', filter: 'bibjson.author.name.exact', value: data.author[i].name} });
+            }
+            details += '<br>';
+        }
+        if ( 'journal' in data ) {
+            details += 'in <i>';
+            details += searchify({class: 'holder', val: data.journal.title, attrs: {function: 'add', filter: 'bibjson.journal.title.exact', value: data.journal.title} });
+            details += '</i> ';
+            if ( 'volume' in data.journal ) { details += data.journal.volume + ' '; }
+            if ( 'issue' in data.journal ) { details += data.journal.issue + ' '; }
+            if ( 'number' in data.journal ) { details += data.journal.number + ' '; }
+            if ( 'year' in data.journal ) {
+                details += ' (';
+                details += searchify({class: 'holder', val: data.journal.year, attrs: {function: 'add', filter: 'bibjson.journal.year.exact', value: data.journal.year} });
+                details += ') ';
+            } else if ( 'year' in data ) {
+                details += ' (';
+                details += searchify({class: 'holder', val: data.year, attrs: {function: 'add', filter: 'bibjson.year.exact', value: data.year} });
+                details += ') ';
+            }
+        }
+        details += '</p>';
+        var kw = [];
+        if ( 'keywords' in data ) { kw = kw.concat(data.keywords); }
+        if ( 'subject' in data ) {
+            var s = [];
+            for ( var ss in data.subject ) {
+                s.push(data.subject[ss].term);
+            }
+            kw = kw.concat(s); 
+        }
+        kw = unique(kw);
+        if ( kw.length !== 0 ) {
+            details += '<p>';
+            for ( var i in kw ) {
+                if ( i != 0 ) { details += ', '; }
+                details += searchify({class: 'holder', val: kw[i], attrs: {function: 'add', query: kw[i] } });
+            }
+            details += '</p>';
+        }
+        if ( 'abstract' in data ) {
+            //details += '<p>' + data.abstract + '</p>';
+        }
+        details += '</td></tr>';
+        return details;
+    }
+    var results = function(data) {
+        var disp = '<table class="table table-striped table-bordered holder holder-innerresults">';
+        for ( var r in data.hits.hits ) {
+            disp += result(data.hits.hits[r]['_source'].bibjson);
+        }
+        disp += '</table>';
+        $('.holder.holder-results').html(disp);
+    }
+    var scroll = function(data) {
+        for ( var r in data.hits.hits ) {
+            $('.holder.holder-innerresults').append(result(data.hits.hits[r]['_source'].bibjson));
+        }
+    }
+    // *****************************************************************************
+
+    
+    
+    $('body').holder({
+        "url": "https://doaj.org/query/article/_search",
+        "what": "search infinite scroll experiment on DOAJ data",
+        "scroll": true,
+        "results": {
+            "default": results,
+            "scroll": scroll
+        }
+    }); 
+
+    
+// a function to simplify down to unique values
+var unique = function(a) {
+    for ( var i=0; i<a.length; ++i ) {
+        for ( var j=i+1; j<a.length; ++j ) {
+            if ( a[i] === a[j] ) {
+                a.splice(j--, 1);
+            }
+        }
+    }
+    return a;
+};
+
+
+    
+});
+</script>
+        
+    
+</body>
+</html>

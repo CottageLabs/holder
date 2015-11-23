@@ -240,7 +240,7 @@ function scrollin(elem) {
             "fuzzify": "*", // fuzzify the search box query params if they are simple strings. Can be * or ~ or if false it will not run
             "executeonload": true, // run default search as soon as page loads
             "pushstate": true, // try pushing state to browser URL bar or not
-            "scroll": false, // when results are scrolled to bottom retrieve the next set of results
+            "infinite": false, // when results are scrolled to bottom retrieve the next set of results
             "after": {} // define callback functions to run after any other function (keyed by function name it should follow)
         };
         
@@ -317,8 +317,8 @@ function scrollin(elem) {
         // so if this addition adds something that does not affect the query or results, it may also be necessary to 
         // have a way to represent that on the page (or maybe not...)
         defaults.add = function(event,th) {
-            if ( event ) event.preventDefault();
             scrollin($('.' + options.class + '.holder-search'));
+            options.suggesting = false;
             $('.' + options.class + '.holder-options').hide('fast');
             if (event) event.preventDefault();
             if (!th) th = $(this);
@@ -387,17 +387,6 @@ function scrollin(elem) {
             if ( typeof options.after.suggest === 'function' ) options.after.suggest();
         };
          
-        // a function to scroll just the results for infinte page scrolling
-        defaults.scrolling = false;
-        defaults.scrollresults = function() {
-          if ( options.query.from + options.query.size < options.response.hits.total ) {
-            options.scrolling = true;
-            options.query.from = options.query.from + options.query.size;
-            options.execute();
-          }
-          if ( typeof options.after.scrollresults === 'function' ) options.after.scrollresults();
-        }
-
         // a function that prepares the query based on the default, the first time it runs, if there is not one provided
         defaults.initialisequery = function() {
             if ( options.aggregations ) options.defaultquery.aggregations = options.aggregations;
@@ -430,15 +419,9 @@ function scrollin(elem) {
                     }
                 }
             }
-            var tq = options.query;
-            if ( options.scrolling ) {
-              delete tq.aggregations;
-              delete tq.facets;
-            }
-            // TODO could simplify query if suggesting on facets, drop out ones that are not needed and set result size to zero
             // set the ajax options then execute
             var opts = {
-                url: options.url,
+                url: options.url, // TODO should maybe add a random param generation to this to ensure no-cache (or check jquery no-cache option)
                 type: options.type,
                 cache: false,
                 //contentType: "application/json; charset=utf-8",
@@ -448,22 +431,14 @@ function scrollin(elem) {
                     //obj = $(this); TODO check if this works with or without passing the this context
                     $('.' + options.class + '.holder-loading').hide();
                     options.response = resp;
-                    if (!options.suggesting && !options.scrolling) options.render(); // don't render the query if it was just a suggestion update
+                    if (!options.suggesting) options.render(); // don't render the query if it was just a suggestion update
                     if ( typeof options.results === 'function' ) {
                         options.results(options.response);
                     } else if ( typeof options.results === 'object' ) {
-                        if ( options.scrolling ) {
-                          options.results.scroll(options.response);
-                          options.scrolling = false;
-                        } else if ( options.suggesting ) {
-                          options.results.suggestions(options.response);                          
-                          options.suggesting = false;
-                        } else {
-                          for ( var r in options.results ) {
-                              if ( typeof options.results[r] === 'function') {
-                                  options.results[r](options.response);
-                              }
-                          }
+                        for ( var r in options.results ) {
+                            if ( typeof options.results[r] === 'function') {
+                                options.results[r](options.response);
+                            }
                         }
                     }
                 },
@@ -473,7 +448,7 @@ function scrollin(elem) {
                 }
             };
             if ( options.type != 'POST' ) {
-                opts.url += '?source=' + encodeURIComponent(JSON.stringify(tq));
+                opts.url += '?source=' + encodeURIComponent(JSON.stringify(options.query));
             } else {
                 // TODO: add the query as data to the ajax opts
             }
@@ -493,7 +468,7 @@ function scrollin(elem) {
             }
             found += ' of ' + options.response.hits.total;
             $('.' + options.class + '.holder-search').val("").attr('placeholder',found);
-            if ( options.pushstate && (!options.suggesting && !options.scrolling ) ) {
+            if ( options.pushstate ) {
                 try {
                     if ('pushState' in window.history) window.history.pushState("", "search", '?source=' + JSON.stringify(options.query));
                 } catch(err) {
@@ -542,22 +517,16 @@ function scrollin(elem) {
             },
             default: function(data) {
                 if (data === undefined) data=options.response;
-                var res = '';
-                res += '<div class="row"><div class="col-md-12' + options.class + ' holder-innerresults">';
+                var res = '<div class="row"><div class="col-md-12">';
                 for ( var r in data.hits.hits ) {
                     res += '<p>' + JSON.stringify( data.hits.hits[r] ) + '</p>';
                 }     
                 res += '</div></div>';
-                $('.' + options.class + '.holder-results').html(res);                  
+                $('.' + options.class + '.holder-results').html(res);
                 if ( typeof options.after.results === 'function' ) options.after.results();
-            },
-            scroll: function(data) {
-              for ( var r in data.hits.hits ) {
-                  $('.' + options.class + '.holder-innerresults').append('<p>' + JSON.stringify( data.hits.hits[r] ) + '</p>');
-              }                  
             }
         };
-
+        
         $.fn.holder.options = $.extend(defaults, options);
         var options = $.fn.holder.options;
         if (options.defaultquery.from === undefined) options.defaultquery.from = 0;
@@ -576,12 +545,8 @@ function scrollin(elem) {
                 options.execute();
             }
             if ( options.executeonload && JSON.stringify($.getUrlVars()) === "{}" ) options.execute();
-            if ( options.scroll ) {
-              $(window).scroll(function() {
-                if ( !options.scrolling && $(window).scrollTop() == $(document).height() - $(window).height() ) {
-                  options.scrollresults();
-                }
-            }); 
+            if ( options.infinite ) {
+              // TODO: infinite scroll somehow
             }
         });
 
