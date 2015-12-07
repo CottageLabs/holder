@@ -4,9 +4,10 @@ jquery.holder.js
 
 a new attempt at an integrated search frontend
 created by Mark MacGillivray - mark@cottagelabs.com
-copyheart 2015
+copyheart or MIT
+December 2015
 
-VERSION 0.0.2
+VERSION 0.0.9
 
 what I want is :
 
@@ -100,7 +101,7 @@ if (!Array.prototype.indexOf) {
             n = Number(arguments[1]);
             if (n != n) { // shortcut for verifying if it's NaN
                 n = 0;
-            } else if (n != 0 && n != Infinity && n != -Infinity) {
+            } else if (n !== 0 && n != Infinity && n != -Infinity) {
                 n = (n > 0 || -1) * Math.floor(Math.abs(n));
             }
         }
@@ -144,9 +145,9 @@ var fuzzify = function(querystr, fuzz) {
                 fuzz == "*" ? oip = "*" + oip : false;
                 pq += oip + " ";
             }
-        };
+        }
         rqs = pq;
-    };
+    }
     return rqs;
 };
 
@@ -260,7 +261,7 @@ function scrollin(elem) {
             }
             // bind the add to the search box explicitly with delay, if there is a suggest function defined
             if ( typeof options.suggest === 'function' ) {
-                $('.' + options.class + '.holder-search').bindWithDelay('keyup',function(event) { options[$(this).attr('holder-function')](event,$(this)); }, 300);
+                $('.' + options.class + '.holder-search').bindWithDelay('keyup',function(event) { options[$(this).attr('holder-function')](event,$(this)); }, 500);
                 $('.' + options.class + '.holder-search').bind('focus', function(event) { $('.' + options.class + '.holder-options').show('fast'); });
                 $('.' + options.class + '.holder-search').bindWithDelay('blur', function(event) { $('.' + options.class + '.holder-options').hide('fast'); }, 500);
             }
@@ -558,11 +559,12 @@ function scrollin(elem) {
             }
         };
 
-        $.fn.holder.options = $.extend(defaults, options);
-        var options = $.fn.holder.options;
+        options = $.extend(defaults, options);
+        if (options.dao && dao) $.extend(options, dao[options.dao]);
         if (options.defaultquery.from === undefined) options.defaultquery.from = 0;
         if (options.defaultquery.size === undefined) options.size ? options.defaultquery.size = options.size : options.defaultquery.size = 10;
-
+        $.fn.holder.options = options;
+      
         var obj = $(this);
         return this.each(function() {
             options.ui();

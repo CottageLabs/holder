@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Holder</title>
+    <meta name="description" content="">
+    <meta name="author" content="Cottage Labs">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <script type="text/javascript" src="lib/jquery-1.10.2.min.js"></script>
+    <script type="text/javascript" src="lib/bootstrap-3.0.3/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="lib/bootstrap-3.0.3/css/bootstrap.min.css">
+    <script type="text/javascript" src="lib/d3/d3.min.js"></script>
+    
+    <script type="text/javascript" src="jquery.holder.js"></script>
+    <script type="text/javascript" src="views/network.js"></script>
+
+    <style> <!-- style for bar chart exampe -->
+    .holder-chart text {
+        fill: white;
+        font: 10px sans-serif;
+        text-anchor: end;
+    }
+    </style>
+
+</head>
+
+<body>
+    
+	<div class="container-fluid wrapper-header-first" style="background-color:white;border-bottom:4px solid #92ce73;margin-bottom:10px;">
+		<div class="container header-first">
+			<nav class="col-xs-12 col-sm-12 col-lg-8" role="navigation">
+				<ul class="nav navbar-nav">
+					<li style="margin-right:50px;"><h2 style="font-size:3.4em;margin-top:5px;color:#187c83;"><a href="/">Holder UI example</a></h2></li>
+				</ul>
+			</nav>
+		</div>
+	</div>
+
+    <div class="container-fluid" style="margin:5px;">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-default holder holder-ui">
+                    <div class="panel-heading" style="background-color:white;padding:0px;">
+                        <div class="input-group" style="margin-left:-1px;margin-top:-1px;margin-bottom:-6px;margin-right:-2px;">
+                            <div class="input-group-btn">
+															<a href="#" class="btn btn-default holder holder-function" holder-function="prev" alt="previous" title="previous" style="height:50px;font-size:1.6em;">&lt;</a>
+                            </div>
+                            <input type="text" class="form-control holder holder-search holder-function" holder-function="suggest" placeholder="search..." style="font-size:1.6em;height:50px;">
+                            <div class="input-group-btn">
+                                <a href="#" class="btn btn-default holder holder-function" holder-function="next" alt="next" title="next" style="height:50px;font-size:1.6em;">&gt;</a>
+                            </div>
+                        </div>
+                        <div class="holder holder-filters" style="margin-top:5px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12" style="margin-top:10px;">
+                <div class="holder holder-results" style="height:100%;overflow:scroll;"></div>
+            </div>
+        </div>
+    </div>
+
+    
+<script>
+jQuery(document).ready(function() {
+
+    $('body').holder({
+        "what": "search ContentMine Facts example",
+        "url": "http://api.contentmine.org/query/facts",
+        "datatype": "JSON"
+    }); 
+
+    setTimeout(function() {$('.holder-options').hide(); }, 200);
+
+});
+</script>
+        
+    
+</body>
+</html>

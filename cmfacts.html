@@ -35,12 +35,9 @@
     
 	<div class="container-fluid wrapper-header-first" style="background-color:white;border-bottom:4px solid #92ce73;margin-bottom:10px;">
 		<div class="container header-first">
-			<div class="navbar-header col-xs-12 col-sm-12 col-lg-4">
-				<a class="navbar-brand" href="http://contentmine.org/" alt="Return to the ContentMine website" title="Return to the ContentMine website"><img src="http://contentmine.org/wp-content/themes/sage_contentmine-manual.org/assets/images/logo-web.png" style="height:100%;margin-left:-20px;"></a>
-			</div>
 			<nav class="col-xs-12 col-sm-12 col-lg-8" role="navigation">
 				<ul class="nav navbar-nav">
-					<li style="margin-right:50px;"><h2 style="font-size:3.4em;margin-top:5px;color:#187c83;">FACTS</h2></li>
+					<li><h2 style="font-size:3.4em;margin-top:5px;color:#187c83;"><a href="/cmfacts.html">ContentMine FACTS</a></h2></li>
 				</ul>
 			</nav>
 		</div>
@@ -152,11 +149,11 @@ jQuery(document).ready(function() {
     };
 
     
-    var sz = 100;
+    var sz = 20;
     $('body').holder({
         "what": "search ContentMine Facts",
-        //"url": "http://api.contentmine.org/query/facts",
-        "url": "http://localhost:9200/contentmine/fact/_search",
+        "url": "http://api.contentmine.org/query/facts",
+        //"url": "http://localhost:9200/contentmine/fact/_search",
         "datatype": "JSON",
         "results": {
             "default": results,
