@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>SWAP Reporting</title>
+  <meta name="description" content="">
+  <meta name="author" content="Cottage Labs">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+  <!--[if lt IE 9]>
+    <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <script type="text/javascript" src="lib/jquery-1.10.2.min.js"></script>
+  <script type="text/javascript" src="lib/bootstrap-3.0.3/js/bootstrap.min.js"></script>
+  <link rel="stylesheet" href="lib/bootstrap-3.0.3/css/bootstrap.min.css">
+  <script type="text/javascript" src="lib/d3/d3.min.js"></script>
+
+  <script type="text/javascript" src="jquery.holder.js"></script>
+
+  <script src="lib/d3/topojson.v1.min.js"></script>
+  <script type="text/javascript" src="views/scotland.js"></script>
+  <script src="//static.cottagelabs.com/maps/scotland/outcodes.js"></script>
+  <script src="lib/d3/sankey.js"></script>
+  <script src="views/sankey.js"></script>
+  <script type="text/javascript" src="views/chart.js"></script>
+
+  <style>
+    body {
+      color:#666;
+    }
+    .label-swap {
+      background-color:#ddd;
+      color:#666;
+      padding:3px 6px 3px 6px;
+    }
+    
+    .subunit { 
+      fill: #eee; 
+    }
+    .subunit-boundary {
+      fill: none;
+      stroke:#66bbff;
+      stroke-width:0.3px;
+      stroke-dasharray: 2,2;
+      stroke-linejoin: round;
+    }
+    .subunit-label {
+      fill: #333;
+      fill-opacity: .5;
+      font-size: 2px;
+      font-weight: 300;
+      text-anchor: middle;
+    }
+    .circle-label {
+      fill: #333;
+      fill-opacity: .5;
+      font-size: 1px;
+      font-weight: 300;
+      text-anchor: middle;
+    }
+    svg .circle{
+        fill: none;
+        stroke:red;
+        stroke-width: 0.3px;
+        cursor: pointer;
+    }
+
+    #chart {
+      height: 1000px;
+    }
+    .node rect {
+      cursor: move;
+      fill-opacity: .9;
+      shape-rendering: crispEdges;
+    }
+    .node text {
+      pointer-events: none;
+      text-shadow: 0 1px 0 #fff;
+    }
+    .link {
+      fill: none;
+      stroke: #000;
+      stroke-opacity: .2;
+    }
+    .link:hover {
+      stroke-opacity: .5;
+    }
+
+    .holder-chart text {
+        fill: white;
+        font: 10px sans-serif;
+        text-anchor: end;
+    }
+  </style>
+
+</head>
+
+<body>
+  
+  <div class="container-fluid" style="width:1200px;margin:0 auto 50px auto;">
+    
+    <div class="row">
+      <div class="col-md-12">
+        <div class="jumbotron" style="background-color:#66bbff;">
+          <h1 style="color:white;font-size:54px;text-align:center;">Scottish Wider Access Programme</h1>
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid" style="margin:5px;">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-default holder holder-ui">
+                    <div class="panel-heading" style="background-color:white;padding:0px;">
+                        <div class="input-group" style="margin-left:-1px;margin-top:-1px;margin-bottom:-6px;margin-right:-2px;">
+                            <div class="input-group-btn">
+															<a href="#" class="btn btn-default holder holder-function" holder-function="prev" alt="previous" title="previous" style="height:50px;font-size:1.6em;">&lt;</a>
+                            </div>
+                            <input type="text" class="form-control holder holder-search holder-function" holder-function="suggest" placeholder="search..." style="font-size:1.6em;height:50px;">
+                            <div class="input-group-btn">
+                                <a href="#" class="btn btn-default holder holder-toggle" holder-toggle="options" alt="show/hide search options" title="show/hide search options" style="height:50px;font-size:1.6em;">: :</a>
+                                <a href="#" class="btn btn-default holder holder-function" holder-function="next" alt="next" title="next" style="height:50px;font-size:1.6em;">&gt;</a>
+                            </div>
+                        </div>
+                        <div class="holder holder-filters" style="margin-top:5px;"></div>
+                    </div>
+                    <div class="panel-body section holder holder-options">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="holder holder-suggestions"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12" style="margin-top:10px;">
+                <div class="holder holder-results" style="height:100%;overflow:scroll;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-12">
+        <h2 id="overview">
+          
+        </h2>
+        <h2>
+          <span id="period">Across all periods</span> <span id="inlocale">there were</span> <span class="label label-swap" id="total"></span> student registrations.
+        </h2>
+        <h2>
+          * <span class="label label-swap" id="males"></span> were male, and 
+          <span class="label label-swap" id="females"></span> were female.
+        </h2>
+        <h2>
+          * Most were <span class="label label-swap" id="situation"></span>, 
+          <span class="label label-swap" id="nationality"></span>,
+          staying in <span class="label label-swap" id="post_code"></span>.
+        </h2>
+        <h2>
+          * <span class="label label-swap" id="disability"></span> listed some form of disability, with 
+          <span class="label label-swap" id="regd_disabled"></span> registered disabled.
+        </h2>
+        <h2>
+          * The most popular course was <span class="label label-swap" id="pcourse"></span>  
+          with <span class="label label-swap" id="pcoursen"></span> students.
+        </h2>
+        <h2>
+          * The most common college was <span class="label label-swap" id="pcollege"></span>  
+          with <span class="label label-swap" id="pcollegen"></span> students.
+        </h2>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:20px;">
+      <div class="col-md-12" id="sankey" style="width:1200px;padding:0;">
+      </div>
+    </div>
+    
+    <div class="row" style="margin-top:20px;">
+      <div class="col-md-12">
+        <svg class="holder holder-chart" style="width:1200px;min-height:200px;padding:0;overflow:scroll;"></svg>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:20px;">
+      <div class="col-md-12" id="scotland" style="outline:1px solid #66bbff;height:1200px;width:1200px;padding:0;">
+      </div>
+    </div>
+
+  
+  </div>
+
+    
+<script>
+jQuery(document).ready(function() {
+  
+  var oc = {}
+  for ( var o in outcodes ) {
+    oc[outcodes[o].id] = {
+      lat: outcodes[o].location.geo.lat,
+      lon: outcodes[o].location.geo.lon,
+    }
+  }
+  
+  var results = function(data) {
+    $('#sankey').html("");
+    var flows = {
+      'classification': ['college'],
+      'college': ['progressions.institution_shortname'],
+      'progressions.institution_shortname': ['progressions.reg_2nd_year'],
+      'progressions.reg_2nd_year': ['simd_quintile']
+    };
+    sankey('#sankey',data,flows);
+
+    var locations = [];
+    for ( var r in data.facets.post_code.terms ) {
+      if ( isNaN( parseInt(data.facets.post_code.terms[r].term.substring(0,1) ) ) ) {
+        var loc = {
+          name: data.facets.post_code.terms[r].term,
+          count: data.facets.post_code.terms[r].count
+        }
+        try {
+          loc.lat = oc[loc.name].lat;
+          loc.lon = oc[loc.name].lon;
+          locations.push(loc);
+        } catch(err) {
+        }
+      }
+    }
+    $('#scotland').html("");
+    scotland('#scotland',locations);
+    
+    chart(data,['classification','nationality','college','disability','gender']);
+
+    $('#total').text(data.hits.total);
+    
+    for ( var r in data.facets.disability.terms ) {
+      if ( data.facets.disability.terms[r].term === "No known disability" ) {
+        $('#disability').text(data.hits.total - data.facets.disability.terms[r].count - data.facets.disability.missing);
+      }
+    }
+
+    for ( var r in data.facets.regd_disabled.terms ) {
+      if ( data.facets.regd_disabled.terms[r].term === "true" ) {
+        $('#regd_disabled').text(data.facets.regd_disabled.terms[r].count);
+      }
+    }
+
+    try {
+      $('#pcourse').text(data.facets.course.terms[0].term);
+      $('#pcoursen').text(data.facets.course.terms[0].count);
+    } catch(err) {}
+    try {
+      $('#pcollege').text(data.facets.college.terms[0].term);
+      $('#pcollegen').text(data.facets.college.terms[0].count);
+    } catch(err) {}
+
+    try {
+      $('#situation').text(data.facets.situation.terms[0].term + ' (' + data.facets.situation.terms[0].count + ')');
+    } catch(err) {}
+    try {
+      $('#nationality').text(data.facets.nationality.terms[0].term + ' (' + data.facets.nationality.terms[0].count + ')');
+    } catch(err) {}
+    try {
+      $('#post_code').text(data.facets.post_code.terms[0].term + ' (' + data.facets.post_code.terms[0].count + ')');
+    } catch(err) {}
+
+    if ( data.facets.archive.terms.length === 1 ) {
+      $('#period').html('In the <span class="label label-swap">' +  data.facets.archive.terms[0].term + '</span> period');
+    } else {
+      $('#period').html('Across all periods');      
+    }
+
+    if ( data.facets.locale.terms.length === 1 ) {
+      $('#inlocale').html('<span class="label label-swap">SWAP ' + data.facets.locale.terms[0].term + '</span> had');
+    } else {
+      $('#inlocale').html('there were');
+    }
+
+    for ( var r in data.facets.gender.terms ) {
+      if ( data.facets.gender.terms[r].term === "Male" ) {
+        $('#males').text(data.facets.gender.terms[r].count);
+      }
+      if ( data.facets.gender.terms[r].term === "Female" ) {
+        $('#females').text(data.facets.gender.terms[r].count);
+      }
+    }
+    
+    $('#overview').html('');      
+    try {
+      var hasoverview = false;
+      var overview = 'Report filtered for ';
+      for ( var q in $('body').holder.options.query.query.filtered.filter.bool.must ) {
+        var qq = $('body').holder.options.query.query.filtered.filter.bool.must[q].term;
+        for ( var qqp in qq ) {
+          if ( qqp !== 'archive.exact' && qqp !== 'locale.exact' ) {
+            overview += '<span class="label label-swap">' + qqp.replace('.exact','').replace('_',' ') + ': ' + qq[qqp] + '</span> ';
+            hasoverview = true;
+          }
+        }
+      }
+      if (hasoverview) $('#overview').html(overview + '.');
+    } catch(err) {}
+
+  }
+
+  var suggestions = function(data) {
+    if (data === undefined) data = options.response;
+    $('.holder.holder-suggestions').html('');
+    for ( var f in $('.holder').holder.options.query.facets ) {
+      var disp = '<div class="col-md-3"><select style="margin-bottom:3px;" class="form-control holder holder-function" holder-function="add" holder-filter="';
+      var qf = $('.holder').holder.options.query.facets[f].terms.field;
+      disp += qf + '"><option value="">choose ' + f + '</option>';
+      for ( var r in data.facets[f].terms ) {
+        var j = data.facets[f].terms[r];
+        disp += '<option value="' + j.term + '">' + j.term + ' (' + j.count + ')</option>';
+      }
+      disp += '</select></div>';
+      $('.holder.holder-suggestions').append(disp);
+    }
+  };
+    
+  $('body').holder({
+    what: "SWAP report",
+    url: "https://swapsurvey.org/query/student/_search",
+    results: {
+      default: results,
+      //facets: facets,
+      suggestions: suggestions
+    },
+    pushstate: false,
+    query: {
+      "query": {
+        "filtered": {
+          "query": {
+            "bool": {
+              "must": [
+              ]
+            }
+          },
+          "filter": {
+            "bool": {
+              "must":[
+/*                {
+                  "query": {
+                    "query_string": {
+                      "query": "progressions.reg_2nd_year:*"
+                    }
+                  }
+                }*/
+              ]
+            }
+          }
+        }
+      },
+      size: 10000,
+      from:0,
+      fields: ['classification','college','simd_quintile','progressions.institution_shortname','progressions.reg_2nd_year'],
+      facets: {
+        archive: { terms: { "field": "archive.exact", "size": 100, "order": "reverse_term" } },
+        locale: { terms: { "field": "locale.exact" } },
+        simd_decile: { terms: { "field": "simd_decile.exact" } },
+        disability: { terms: { "field": "disability.exact", "size": 100 } },
+        gender: { terms: { "field": "gender.exact" } },
+        regd_disabled: { terms: { "field": "registered_disabled" } },
+        situation: { terms: { "field": "situation.exact" } },
+        nationality: { terms: { "field": "nationality.exact" } },
+        college: { terms: { "field": "college.exact", "size": 100 } },
+        campus: { terms: { "field": "campus.exact", "size": 100 } },
+        course: { terms: { "field": "course.exact", "size": 100 } },
+        classification: { terms: { "field": "classification.exact", "size": 100 } },
+        post_code: { terms: { "field": "post_code", "size": 1500 } }
+      }
+    }
+  }); 
+    
+});
+</script>
+        
+    
+</body>
+</html>

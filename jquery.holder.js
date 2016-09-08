@@ -5,9 +5,9 @@ jquery.holder.js
 a new attempt at an integrated search frontend
 created by Mark MacGillivray - mark@cottagelabs.com
 copyheart or MIT
-December 2015
+August 2016
 
-VERSION 0.0.9
+VERSION 0.1.0
 
 what I want is :
 
@@ -269,6 +269,7 @@ function scrollin(elem) {
             $(document).on('click', 'a.' + options.class + '.holder-function', function(event) { options[$(this).attr('holder-function')](event,$(this)); } );
             $(document).on('change', 'input.' + options.class + '.holder-function', function(event) { options[$(this).attr('holder-function')](event,$(this)); } );
             $(document).on('change', 'textarea.' + options.class + '.holder-function', function(event) { options[$(this).attr('holder-function')](event,$(this)); } );
+            $(document).on('change', 'select.' + options.class + '.holder-function', function(event) { options[$(this).attr('holder-function')](event,$(this)); } );
             // TODO bind holder option buttons
             // TODO bind holder sliders (once interpreting sliders into the query has also been done)
             // bind holder element toggle functions
@@ -328,7 +329,11 @@ function scrollin(elem) {
                 options.query.query.filtered.query.bool.must.push({"query_string": {"query": th.attr('holder-query')}});
             } else if ( th.attr('holder-filter') ) {
                 var fq = {term:{}};
-                fq.term[th.attr('holder-filter')] = th.attr('holder-value');
+                if ( th.is('select') ) {
+                    fq.term[th.attr('holder-filter')] = th.val();
+                } else {
+                    fq.term[th.attr('holder-filter')] = th.attr('holder-value');
+                }
                 if (options.query.query.filtered.filter === undefined) options.query.query.filtered.filter = {"bool": {"must":[]}};
                 options.query.query.filtered.filter.bool.must.push(fq);
             } else {
@@ -456,7 +461,7 @@ function scrollin(elem) {
                         if ( options.scrolling ) {
                           options.results.scroll(options.response);
                           options.scrolling = false;
-                        } else if ( options.suggesting ) {
+                        } else if ( options.suggesting && options.results.suggestions ) {
                           options.results.suggestions(options.response);                          
                           options.suggesting = false;
                         } else {
@@ -563,6 +568,7 @@ function scrollin(elem) {
         if (options.dao && dao) $.extend(options, dao[options.dao]);
         if (options.defaultquery.from === undefined) options.defaultquery.from = 0;
         if (options.defaultquery.size === undefined) options.size ? options.defaultquery.size = options.size : options.defaultquery.size = 10;
+        if (options.defaultquery.fields === undefined && options.fields) options.defaultquery.fields = options.fields;
         $.fn.holder.options = options;
       
         var obj = $(this);

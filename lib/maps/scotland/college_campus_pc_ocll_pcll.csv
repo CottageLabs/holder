@@ -1,0 +1,82 @@
+
+Hello Laura see the below list of colleges and their campuses.
+Please put the college name into google (and the campus if there is more than one and needs differentiating).
+Google should show a panel on the right with the campus address and post code.
+If not immediately shown by google, go onto the college web site and find the post code.
+Write the post code after the college and campus name on the same line (you can see some below I have already done)
+
+Then go to this web address and put the outcode in lowercase on the end (outcode is the first part of a post code, before the space)
+https://gateway.cottagelabs.com/postcode/outcode/
+
+So here is an example I have already done for Forth Valley - the address becomes:
+https://gateway.cottagelabs.com/postcode/outcode/fk10
+
+The result includes a lat and lon field - write the latlon values separated by a comma on the line next to the relevant college.
+So you can see the Forth Valley example line I have already done below, it shows 56.115,-3.781 after the post code.
+
+NOTE: to make the result pages easier to read, use google chrome and install the jsonview browser extension:
+https://chrome.google.com/webstore/detail/jsonview/chklaanhfefbnpoihckbnefhakgolnmc
+
+Then do the same for the full post code, all lowercase and with no blank spaces, at the following address:
+https://gateway.cottagelabs.com/postcode/postcode/
+
+So for the Forth Valley example it becomes:
+https://gateway.cottagelabs.com/postcode/postcode/fk101px
+
+And again the result set includes lat and lon fields, this time the values are to a higher degree of precision
+Copy and paste them, as before, onto the line, separated by a comma. See the Forth Valley example below, 
+
+The two URL addresses above will ask you for a username and password - when you get time to do this, call me and I will tell them to you.
+
+Ayrshire Ayr KA8 0EU
+Ayrshire Kilmarnock KA3 7AT
+Ayrshire Kilwinning KA13 6DE
+
+Borders Borders TD1 3HE
+
+City of Glasgow Glasgow G1 2BP
+
+Dumfries and Galloway College Dumfries DG1 4FD
+
+Dundee and Angus Arbroath DD11 3EA
+Dundee and Angus Dundee DD3 8LE
+
+Edinburgh Midlothian
+Edinburgh Milton Road
+Edinburgh Sighthill
+
+Fife College Cupar
+Fife College Halbeath
+Fife College St Bryecdale
+Fife College Stenton
+
+Forth Valley Alloa FK10 1PX 56.115,-3.781 56.114983073748500,-3.786386815236270
+
+Glasgow Clyde Anniesland
+Glasgow Clyde Cardonald
+Glasgow Clyde Langside
+
+Glasgow Kelvin College City Centre
+Glasgow Kelvin College East End
+Glasgow Kelvin College Easterhouse
+Glasgow Kelvin College Springburn
+
+New College Lanarkshire Coatbridge
+New College Lanarkshire Cumbernauld
+New College Lanarkshire Motherwell
+
+Newbattle Abbey Newbattle Abbey
+
+Perth Perth
+
+South Lanarkshire South Lanarkshire
+
+West College Scotland Clydebank
+West College Scotland Greenock
+West College Scotland Paisley
+
+West Lothian West Lothian
+
+
+
+

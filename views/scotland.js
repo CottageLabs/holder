@@ -1,5 +1,5 @@
 
-var scotland = function(target) {
+var scotland = function(target,locations) {
     if (target === undefined) target = 'body';
     if (fill === undefined) var fill = d3.scale.category20();
         
@@ -10,7 +10,7 @@ var scotland = function(target) {
         .center([0.795, 55.89])
         .rotate([4.4, 0])
         .parallels([50, 60])
-        .scale(6000)
+        .scale(15000)
         .translate([w / 1.6, h / 1.4]);
 
     var path = d3.geo.path()
@@ -25,7 +25,7 @@ var scotland = function(target) {
         );
     }
 
-    var svg = d3.select(target).append("svg:svg").attr("width", w).attr("height", h).attr("pointer-events", "all").append('svg:g').call(d3.behavior.zoom().on("zoom", redraw)).append('svg:g');
+    var svg = d3.select(target).append("svg:svg").attr("width", w).attr("height", h).attr("pointer-events", "all").append('svg:g'); //.call(d3.behavior.zoom().on("zoom", redraw)).append('svg:g');
     svg.append('svg:rect').attr('width', w).attr('height', h).attr('fill', 'transparent');
 
     d3.json("lib/maps/scotland/boundaries/all_councils_topo.json", function(error, scotland) {
@@ -52,8 +52,37 @@ var scotland = function(target) {
           .text(function(d) { return d.properties.gss; });
 
 
-    });
 
+         var circles = svg.append("g")
+            .attr("class", "circles")
+            .selectAll("g")
+            .data(locations)
+            .enter().append("g")
+            .attr("class", "circle");
+
+         circles.append("circle")
+            .attr("transform", function(d) {
+                var location = projection([+d.lon, +d.lat]);
+                return "translate(" + location[0]+ "," + location[1]+ ")";
+            })
+            .attr("r", function(d){
+                return Math.sqrt(parseInt(d.count));
+            })
+         
+          svg.selectAll(".circle-label")
+              .data(locations)
+            .enter().append("text")
+              .attr("class", function(d) { return "circle-label " + d.name; })
+              .attr("transform", function(d) {
+                var location = projection([+d.lon, +d.lat]);
+                return "translate(" + location[0]+ "," + location[1]+ ")";
+              })
+              .attr("dy", ".35em")
+              .text(function(d) { return d.name + ' ' + d.count; });
+
+        });
+
+    /*
     d3.csv("lib/maps/scotland/schools.csv", function(error, schools) {
          var school = svg.append("g")
             .attr("class", "schools")
@@ -83,5 +112,6 @@ var scotland = function(target) {
               .text(function(d) { return d.school_label + ' ' + d.pupils; });
 
     });
+    */
 
 };
