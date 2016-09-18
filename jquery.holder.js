@@ -419,22 +419,9 @@ function scrollin(elem) {
             if (options.query === undefined) options.initialisequery();
             // need a check for empty filters and queries for older versions of ES
             if ( options.query.query.filtered ) {
-                if ( options.query.query.filtered.filter ) {
-                    if ( options.query.query.filtered.filter.bool ) {
-                        if ( options.query.query.filtered.filter.bool.must ) {
-                            if ( options.query.query.filtered.filter.bool.must.length === 0 ) delete options.query.query.filtered.filter;
-                        }
-                    }
-                }
-                if ( options.query.query.filtered.query ) {
-                    if ( options.query.query.filtered.query.bool ) {
-                        if ( options.query.query.filtered.query.bool.must ) {
-                            if ( options.query.query.filtered.query.bool.must.length === 0 ) {
-                                options.query.query.filtered.query.bool.must = [{"match_all":{}}];
-                            }
-                        }
-                    }
-                }
+                try { if ( options.query.query.filtered.filter.bool.must.length === 0 ) delete options.query.query.filtered.filter.bool.must; } catch(err) {}
+                try { if ( JSON.stringify(options.query.query.filtered.filter.bool) === '{}' ) delete options.query.query.filtered.filter.bool; } catch(err) {}
+                try { if ( options.query.query.filtered.query.bool.must.length === 0 ) options.query.query.filtered.query.bool.must = [{"match_all":{}}]; } catch(err) {}              
             }
             var tq = options.query;
             if ( options.scrolling ) {
