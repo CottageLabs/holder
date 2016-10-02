@@ -335,6 +335,8 @@ function scrollin(elem) {
                     fq.term[th.attr('holder-filter')] = th.attr('holder-value');
                 }
                 if (options.query.query.filtered.filter === undefined) options.query.query.filtered.filter = {"bool": {"must":[]}};
+                if (options.query.query.filtered.filter.bool === undefined) options.query.query.filtered.filter.bool = {"must":[]};
+                if (options.query.query.filtered.filter.bool.must === undefined) options.query.query.filtered.filter.bool.must = [];
                 options.query.query.filtered.filter.bool.must.push(fq);
             } else {
                 // this is a searchbox with value in it - append the value as a text search
