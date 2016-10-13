@@ -507,7 +507,7 @@ function scrollin(elem) {
                     $('.' + options.class + '.holder-filters').append(btn);
                 }
             }
-            if ( options.query.query.filtered.filter ) {
+            if ( options.query.query.filtered.filter && options.query.query.filtered.filter.bool && options.query.query.filtered.filter.bool.must ) {
                 for ( var f in options.query.query.filtered.filter.bool.must ) {
                     var filter = options.query.query.filtered.filter.bool.must[f];
                     // TODO could be different kinds of filter - term, range, need to deal with each
