@@ -470,7 +470,8 @@ function scrollin(elem) {
                 }
             };
             if ( options.type != 'POST' ) {
-                opts.url += '?source=' + encodeURIComponent(JSON.stringify(tq));
+                opts.url += opts.url.indexOf('?') !== -1 ? '&' : '?';
+                opts.url += 'source=' + encodeURIComponent(JSON.stringify(tq));
             } else {
                 // TODO: add the query as data to the ajax opts
             }
