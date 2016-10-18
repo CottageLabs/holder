@@ -207,6 +207,8 @@ function scrollin(elem) {
 (function($){
     $.fn.holder = function(options) {
 
+        // username and password can also be passed in as options, and will be used to set Auth Basic header
+        // or apikey can be passed in and will be used to set beforesend x-apikey
         var defaults = {
             "what": "search...", // the name of what is being searched, to show in the search bar placeholder
             "class": "holder", // the class name used to identify holder properties for this instance on the page - DO NOT include the .
@@ -473,6 +475,7 @@ function scrollin(elem) {
                 // TODO: add the query as data to the ajax opts
             }
             if (options.username && options.password) opts.headers = { "Authorization": "Basic " + btoa(options.username + ":" + options.password) };
+            if (options.apikey) opts.beforeSend = function (request) { request.setRequestHeader("x-apikey", options.apikey); };
             $.ajax(opts);
             if ( typeof options.after.execute === 'function' ) options.after.execute();
         };
