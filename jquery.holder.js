@@ -425,6 +425,7 @@ function scrollin(elem) {
             if ( options.query.query.filtered ) {
                 try { if ( options.query.query.filtered.filter.bool.must.length === 0 ) delete options.query.query.filtered.filter.bool.must; } catch(err) {}
                 try { if ( JSON.stringify(options.query.query.filtered.filter.bool) === '{}' ) delete options.query.query.filtered.filter.bool; } catch(err) {}
+                try { if ( JSON.stringify(options.query.query.filtered.filter) === '{}' ) delete options.query.query.filtered.filter; } catch(err) {}
                 try { if ( options.query.query.filtered.query.bool.must.length === 0 ) options.query.query.filtered.query.bool.must = [{"match_all":{}}]; } catch(err) {}              
             }
             var tq = options.query;

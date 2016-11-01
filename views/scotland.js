@@ -25,7 +25,7 @@ var scotland = function(target,locations) {
         );
     }
 
-    var svg = d3.select(target).append("svg:svg").attr("width", w).attr("height", h).attr("pointer-events", "all").append('svg:g'); //.call(d3.behavior.zoom().on("zoom", redraw)).append('svg:g');
+    var svg = d3.select(target).append("svg:svg").attr("width", w).attr("height", h).attr("pointer-events", "all").append('svg:g') .call(d3.behavior.zoom().on("zoom", redraw)).append('svg:g');
     svg.append('svg:rect').attr('width', w).attr('height', h).attr('fill', 'transparent');
 
     d3.json("lib/maps/scotland/boundaries/all_councils_topo.json", function(error, scotland) {

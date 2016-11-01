@@ -1,5 +1,5 @@
 
-var sankey = function(element,data,flows) {
+var sankey = function(element,data,flows,fields) {
   
   // this should be a function that is passed into holder somehow, and defines for a given key name how to process the data
   var _process = function(key,value) {
@@ -11,50 +11,54 @@ var sankey = function(element,data,flows) {
   }
     
   // calculates nodes and links from an ES response set with hits and aggregations
-  var setnodesandlinks = function(data) {
+  var setnodesandlinks = function(data,fields) {
     var nodepositions = {};
     var nodecounts = {};
     var visdata = {nodes:[],links:[]}; //,linksindex:{}};
     for ( var i in data.hits.hits ) {
       var rec = data.hits.hits[i]._source !== undefined ? data.hits.hits[i]._source : data.hits.hits[i].fields;
-      for ( var v in rec ) {
-        var val = _process(v,rec[v]);
-        if (val) {
-          var vpos = undefined;
-          if (nodepositions[v+val] === undefined) {
-            visdata.nodes.push({name:val,type:v});
-            vpos = visdata.nodes.length-1;
-            nodepositions[v+val] = vpos;
-          } else {
-            vpos = nodepositions[v+val];
-          }
-          if (flows === undefined || flows[v] !== undefined) {
-            for ( var vv in rec ) {
-              if ( vv !== v ) {
-                var vval = _process(vv,rec[vv]);
-                if (vval) {
-                  var vvpos = undefined;
-                  if (nodepositions[vv+vval] === undefined) {
-                    visdata.nodes.push({name:vval,type:vv});
-                    vvpos = visdata.nodes.length-1;
-                    nodepositions[vv+vval] = vvpos;
-                  } else {
-                    vvpos = nodepositions[vv+vval];
-                  }
-                  if ( flows === undefined || ( flows[v] !== undefined && flows[v].indexOf(vv) !== -1 ) ) {                 
-                    var ref = [v,vv].sort()[0] === v ? vpos + '_' + vvpos : vvpos + '_' + vpos;
-                    if (nodecounts[ref] === undefined) {
-                      nodecounts[ref] = 1;
-                    } else {
-                      nodecounts[ref] += 1;
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+			for ( var v in rec ) {
+				if (fields === undefined || fields.indexOf(v) !== -1) {
+					var val = _process(v,rec[v]);
+					if (val) {
+						var vpos = undefined;
+						if (nodepositions[v+val] === undefined) {
+							visdata.nodes.push({name:val,type:v});
+							vpos = visdata.nodes.length-1;
+							nodepositions[v+val] = vpos;
+						} else {
+							vpos = nodepositions[v+val];
+						}
+						if (flows === undefined || flows[v] !== undefined) {
+							for ( var vv in rec ) {
+								if (fields === undefined || fields.indexOf(vv) !== -1) {
+									if ( vv !== v ) {
+										var vval = _process(vv,rec[vv]);
+										if (vval) {
+											var vvpos = undefined;
+											if (nodepositions[vv+vval] === undefined) {
+												visdata.nodes.push({name:vval,type:vv});
+												vvpos = visdata.nodes.length-1;
+												nodepositions[vv+vval] = vvpos;
+											} else {
+												vvpos = nodepositions[vv+vval];
+											}
+											if ( flows === undefined || ( flows[v] !== undefined && flows[v].indexOf(vv) !== -1 ) ) {                 
+												var ref = [v,vv].sort()[0] === v ? vpos + '_' + vvpos : vvpos + '_' + vpos;
+												if (nodecounts[ref] === undefined) {
+													nodecounts[ref] = 1;
+												} else {
+													nodecounts[ref] += 1;
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
     }
     for ( var nc in nodecounts ) {
       var parts = nc.split('_');
@@ -63,7 +67,7 @@ var sankey = function(element,data,flows) {
     return visdata;
   }
 
-  var visdata = setnodesandlinks(data);
+  var visdata = setnodesandlinks(data,fields);
   
   var margin = {top: 1, right: 1, bottom: 6, left: 1},
       width = 1200 - margin.left - margin.right,

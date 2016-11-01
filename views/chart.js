@@ -32,15 +32,13 @@ var dataset = function(data,tp) {
 };
 
 var chart = function(respdata,agg) {
-    var fill = d3.scale.category20c();
+    var fill = d3.scale.category10();
     $('.holder.holder-chart').html("");
-    var data = dataset(respdata,agg);
+    //var data = dataset(respdata,agg);
+    var data = respdata;
     var w = $('.holder.holder-chart').width();
     var h = $('.holder.holder-chart').height();
-    var barh = 20;
-    console.log(w)
-    console.log(h)
-    console.log(data)
+    var barh = 30;
     var x = d3.scale.linear().domain([0,d3.max(data,function(d) {return d.value; })]).range([0,w]);
     var chart = d3.select('.holder.holder-chart').attr('width',w).attr('height',barh*data.length);
     var bar = chart.selectAll("g").data(data).enter().append("g").attr("transform", function(d,i) {return "translate(0," + i * barh + ")"; });
