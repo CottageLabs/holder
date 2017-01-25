@@ -2,21 +2,59 @@
 
 // this graph display assumes the default search display has already tidily created options.results
 
+// TODO as the first example of it, have this display define a .transform() function that will be called 
+// by the main transform function, to make the records meet the requirements for this display
+
+// need to sort the records by the chosen date too - but this should not be done to the records list in general
+
+// what if this display needs to run against returned filters or other values instead of the records? 
+// could probably just do the necessary data cleaning right here in that case - unlikely to be much use 
+// to other displays. However, could also add to this example an ability to line chart any filters 
+// instead of or as well as the main data.
+
+// to build a generic line chart for any values, would need to parse record for any key that look like 
+// a date - find a way to test all fields for date, or see if they have "date" in their name, or createdAt - updatedAt
+// what if more than one field appears to be a date? Which to use? Provide as options?
+
+// then need to be able to line out values for all records
+// so - a line for the records would most simply just be a count of all the records with same createdAt date, for example
+// or could be records with same createdAt date that share key of some value? 
+
+// also need to be able to group them - so by default group by day on the date, but could also do month, year, hour, minute?
+
+// may be better having an overall flow like:
+/*
+- options.execute
+calls options.review
+which calls for each options.reviewer['fn1','fn2']
+and looks for index(options,fn1) and runs it if a function
+- so where would displays put those functions? should displays be objects, not functions, with an init?
+each reviewer does whatever may be necessary at a WHOLE results level
+then options.review goes on to call options.transform
+options.transform does the default transform (unless some way to disable the default transform)
+then options.transform looks in options.transformer for list of transformers
+(same issues as above - decide where to find these named transformer functions)
+so each display can define a transformer function that needs to run at a RECORD level
+options.review then also runs options.record for each record, unless it is set to false
+*/
+
 $.fn.holder.display.line = function(obj) {
   var options = obj.holder.options;
   
   var parseTime = d3.timeParse("%d-%b-%y");
-  var line = function(target,data) {
-    if (target === undefined) target = 'body';
-    var w = $(target).width();
-    var h = $(target).height();
 
-    var margin = {top: 0, right: 5, bottom: 20, left: 20};
-    var width = w - margin.left - margin.right;
-    var height = h - margin.top - margin.bottom;
-    var svg = d3.select(target).append("svg:svg").attr("width", width).attr("height", height);
-    //var svg = d3.select("svg"),
-    var g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+	var fill = d3.scaleOrdinal(d3.schemeCategory10);
+
+	var filter = function(d) { 
+		$('.'+options.class+'.search').val('createdAt:'+d.date.valueOf()).trigger('change');
+	}
+
+  var line = function(data) {
+    var svg = d3.select("svg.holder.line"),
+      margin = {top: 10, right: 5, bottom: 10, left: 25},
+      width = +svg.attr("width") - margin.left - margin.right,
+      height = +svg.attr("height") - margin.top - margin.bottom,
+      g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
     var x = d3.scaleTime()
       .rangeRound([0, width]);
@@ -24,41 +62,82 @@ $.fn.holder.display.line = function(obj) {
     var y = d3.scaleLinear()
       .rangeRound([height, 0]);
 
-    var line = d3.line()
+    /*var line = d3.line()
       .x(function(d) { return x(d.date); })
-      .y(function(d) { return y(d.val); });
+      .y(function(d) { return y(d.val); });*/
 
+		var line = d3.line()
+			.curve(d3.curveCatmullRomOpen)
+			.x(function(d) { return x(d.date); })
+			.y(function(d) { return y(d.val); });
+		
 		/* example data:    
 		data = [
       { date: parseTime('24-Apr-07'), close: +93.24 },
       { date: parseTime('24-Jul-07'), close: +90.24 }
     ]*/
 
-    x.domain(d3.extent(data, function(d) { return d.date; }));
-    y.domain(d3.extent(data, function(d) { return d.val; }));
+    x.domain(d3.extent(data, function(d) { return d.date; })).range([0, width - margin.left - margin.right]);
+    y.domain(d3.extent(data, function(d) { return d.val; })).nice().range([height - margin.top - margin.bottom, 0]);
 
     g.append("g")
-      .attr("class", "axis axis--x")
-      .attr("transform", "translate(0," + height + ")")
-      .call(d3.axisBottom(x));
+      .attr("class", "axis")
+      .attr("transform", "translate(0," + y.range()[0] + ")")
+      .call(d3.axisBottom(x)
+				.ticks( 10 )
+				.tickSize(-(height - margin.top - margin.bottom),0,0)
+				.tickSizeOuter(0)
+			);
 
     g.append("g")
-      .attr("class", "axis axis--y")
-      .call(d3.axisLeft(y));
+      .attr("class", "axis")
+      .call(d3.axisLeft(y)
+				.ticks( 10 )
+				.tickSize(-(width - margin.right - margin.left),0,0)
+				.tickSizeOuter(0)
+			);
 
     g.append("path")
       .datum(data)
       .attr("class", "line")
-      .attr("d", line);
-  }
+      //.attr("d", line)
+			.attr("d", d3.line()
+                   .curve(d3.curveLinear)
+                   .x(function(d) { return x(d.date); })
+                   .y(function(d) { return y(d.val); })
+			)
+			.style('fill', 'none' )
+      .attr("stroke", function(d) { return fill(d.key); })
+			.style('stroke-width', '1.3px' );
+		
+    svg.selectAll("dot")
+      .data(data)
+      .enter().append("circle")
+      .attr("r", 2.5)
+      .attr("cx", function(d) { return x(d.date) + margin.left; })
+      .attr("cy", function(d) { return y(d.val) + margin.top; })
+			.attr("class","holder dot")
+      .attr("stroke", function(d) { return fill(d.key); })
+      .attr("fill", function(d) { return fill(d.key); })
+			.attr("do", "add")
+			.attr("key","createdAt")
+			.attr("val",function(d) { return d.date.valueOf(); })
+			.style('cursor', 'pointer' )
+      .append("title")
+      .text(function(d) { return d.date + " " + d.val; });
+	}
 
   if ( !$('div.'+options.class+'.line').length ) {
-		obj.append('<div class="' + options.class + ' line" style="outline:1px solid #ccc;margin-top:20px;height:800px;padding-left:5px;padding-right:5px;"></div>');
+		obj.append('<div class="' + options.class + ' display line" style="outline:1px solid #ccc;margin-top:20px;height:500px;padding-left:5px;padding-right:5px;"><svg class="' + options.class + ' line"></svg></div>');
+		var dh = $('div.'+options.class+'.line').height() - ($('svg.'+options.class+'.line').offset().top - $('svg.'+options.class+'.line').parent().offset().top);
+		var dw = $('div.'+options.class+'.line').width();
+		if ( !$('svg.'+options.class+'.line').attr('height') ) $('svg.'+options.class+'.line').attr('height',dh);
+		if ( !$('svg.'+options.class+'.line').attr('width') ) $('svg.'+options.class+'.line').attr('width',dw);
 	}
 
   var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   var lineit = function(e) {
-		$('div.' + options.class + '.line').html("");
+		$('svg.' + options.class + '.line').html("");
     var dates = {};
 		for ( var r in options.records ) {
       if (options.records[r].createdAt) {
@@ -81,175 +160,22 @@ $.fn.holder.display.line = function(obj) {
       if(keyA > keyB) return 1;
       return 0;
     });
-    line('div.' + options.class + '.line',data);
+    line(data);
 	}
   lineit();
+
+	for ( var e in obj.holder.display.line.extend ) $.when( options[e] ).done(function() { obj.holder.display.line.extend[e](options); } );
   
 }
 
-
-
-
-/*
-
-<!DOCTYPE html>
-<html lang="en">
- <head>
- <title>Line Charts</title>
- <script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
- <script src="http://d3js.org/d3.v2.js"></script>
- <script type="text/javascript">
- function getDate(d) {
- var dt = new Date(d.date);
- dt.setHours(0);
- dt.setMinutes(0);
- dt.setSeconds(0);
- dt.setMilliseconds(0);
- return dt;
- }
- 
-function showData(obj, d) {
- var coord = d3.mouse(obj);
- var infobox = d3.select(".infobox");
- // now we just position the infobox roughly where our mouse is
- infobox.style("left", (coord[0] + 100) + "px" );
- infobox.style("top", (coord[1] - 175) + "px");
- $(".infobox").html(d);
- $(".infobox").show();
- }
- 
-function hideData() {
- $(".infobox").hide();
- }
- 
-var drawChart = function(data) {
- // define dimensions of graph
- var m = [20, 40, 20, 100]; // margins
- var w = 700 - m[1] - m[3]; // width
- var h = 360 - m[0] - m[2]; // height
- 
-data.sort(function(a, b) {
- var d1 = getDate(a);
- var d2 = getDate(b);
- if (d1 == d2) return 0;
- if (d1 > d2) return 1;
- return -1;
- });
- 
-// get max and min dates - this assumes data is sorted
- var minDate = getDate(data[0]),
- maxDate = getDate(data[data.length-1]);
- 
- var x = d3.time.scale().domain([minDate, maxDate]).range([0, w]);
- 
-// X scale will fit all values from data[] within pixels 0-w
- //var x = d3.scale.linear().domain([0, data.length]).range([0, w]);
- // Y scale will fit values from 0-10 within pixels h-0 (Note the inverted domain for the y-scale: bigger is up!)
- var y = d3.scale.linear().domain([0, d3.max(data, function(d) { return d.trendingValue; } )]).range([h, 0]);
- 
-// create a line function that can convert data[] into x and y points
- var line = d3.svg.line()
- // assign the X function to plot our line as we wish
- .x(function(d, i) {
- // return the X coordinate where we want to plot this datapoint
- return x(getDate(d)); //x(i);
- })
- .y(function(d) {
- // return the Y coordinate where we want to plot this datapoint
- return y(d.trendingValue);
- });
- 
- function xx(e) { return x(getDate(e)); };
- function yy(e) { return y(e.trendingValue); };
- 
-$("#chart").append("<p><small><em>Please move the mouse over data points to see details.</em></small></p>");
- 
-// Add an SVG element with the desired dimensions and margin.
- var graph = d3.select("#chart").append("svg:svg")
- .attr("width", w + m[1] + m[3])
- .attr("height", h + m[0] + m[2])
- .append("svg:g")
- .attr("transform", "translate(" + m[3] + "," + m[0] + ")");
- 
-// create yAxis
- var xAxis = d3.svg.axis().scale(x).ticks(d3.time.months, 1).tickSize(-h).tickSubdivide(true);
- // Add the x-axis.
- graph.append("svg:g")
- .attr("class", "x axis")
- .attr("transform", "translate(0," + h + ")")
- .call(xAxis);
- 
-// create left yAxis
- var yAxisLeft = d3.svg.axis().scale(y).ticks(10).orient("left"); //.tickFormat(formalLabel);
- // Add the y-axis to the left
- graph.append("svg:g")
- .attr("class", "y axis")
- .attr("transform", "translate(-25,0)")
- .call(yAxisLeft);
- 
-// Add the line by appending an svg:path element with the data line we created above
- // do this AFTER the axes above so that the line is above the tick-lines
- graph
- .selectAll("circle")
- .data(data)
- .enter().append("circle")
- .attr("fill", "steelblue")
- .attr("r", 5)
- .attr("cx", xx)
- .attr("cy", yy)
- .on("mouseover", function(d) { showData(this, d.trendingValue);})
- .on("mouseout", function(){ hideData();});
- 
- graph.append("svg:path").attr("d", line(data));
- graph.append("svg:text")
- .attr("x", -200)
- .attr("y", -90)
- .attr("dy", ".1em")
- .attr("transform", "rotate(-90)")
- .text("Trending Value");
- 
- 
- $("#chart").append("<div class='infobox' style='display:none;'>Test</div>");
- }
- 
-var draw = function() {
- var data = [ {'date': "2012-10-01", 'trendingValue': 1000}, {'date': "2012-09-01", 'trendingValue': 900}, {'date': "2012-08-01", 'trendingValue': 1100}, {'date': "2012-07-01", 'trendingValue': 950}, {'date': "2012-06-01", 'trendingValue': 1050}];
- drawChart(data);
- }
- </script>
- <style>
- #chart path {
- stroke: steelblue;
- stroke-width: 2;
- fill: none;
- }
- .axis { shape-rendering: crispEdges; }
- .x.axis line { stroke: lightgrey; }
- .x.axis .minor { stroke-opacity: .5; }
- .x.axis path { display: none; }
- .y.axis line, .y.axis path {
- fill: none;
- stroke: #000;
- }
- .infobox {
- border:2px solid steelblue;
- border-radius:4px;
- box-shadow:#333333 0px 0px 10px;
- margin:200px auto;
- padding:5px 10px;
- background:rgba(255, 255, 255, 0.8);
- position:absolute;
- top:0px;
- left:0px;
- z-index:10500;
- font-weight:bold;
- }
- </style>
- </head>
- <body onload="draw();">
- <div id="chart">
- </div>
- </body>
-</html>
-
-*/
+// we can use promises to extend the functionality of the main holder functions
+// define any extensions below, then above, at the end of the main function (which, as a display, runs after every execution)
+// bind every extension so that the next loop round they get triggered.
+// Also, if necessary to bind at init, before the first query fires and returns, set the init to true
+// note however if all that is needed is to retrieve some values from remote sources on first execution, that is better done as a value check and a
+// call to get those resources the first time the main display function above is called - see display/scotland.js for examples of that, 
+// where it retrieves additional map data on first pass
+$.fn.holder.display.line.init = false; 
+$.fn.holder.display.line.extend = {
+	execute: function(options) { console.log(options); }
+}

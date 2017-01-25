@@ -101,7 +101,7 @@ $.fn.holder.display.scotland = function(obj) {
   }
   
   if ( !$('div.'+options.class+'.scotland').length ) {
-		obj.append('<div class="' + options.class + ' scotland" style="outline:1px solid #ccc;margin-top:20px;height:900px;"></div>');
+		obj.append('<div class="' + options.class + ' display scotland" style="outline:1px solid #ccc;margin-top:20px;height:900px;"></div>');
 	}
 
   var oc = {};

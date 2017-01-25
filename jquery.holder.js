@@ -15,6 +15,33 @@ VERSION 0.2.0
 
     // Every function of holder is an option. Look below to see all default functions. Any can be overridden by providing 
     // an alternative function in the options.
+    
+    // to add functionality to any default function, e.g. to run something after it finishes, the normal jquery addition 
+    // of functions on done can work, on either the defaults or the options, on either the $.fn.holder or the element 
+    // it is instantiated upon. e.g these will work:
+    // $.when( $.fn.holder.defaults.execute ).done(hello);
+    // $.when( $('#thingIstartedHolderOn').holder.defaults.execute ).done(goodbye);
+    
+    // this would also work, although options only gets populated after holder is instantiated on something, so call them 
+    // after that is done
+    // $.when( $.fn.holder.options.execute ).done(hello);
+    // $.when( $('#thingIstartedHolderOn').holder.options.execute ).done(goodbye);
+
+    /* functions are expected to end in this order, on init:
+      ui
+      events
+      init
+      execute (if executeonload is true, otherwise no more happens until the user triggers it. NOTE execute ends before the ajax query returns)
+      success
+      error
+      render
+      review
+      display
+      add (when the user triggers a UI event bound to this, which then triggers execute again)
+      remove (as above)
+    */
+      
+
     // They can also be overridden as a group, using $.fn.holder.use. See extend/example.js for an example of a collection 
     // of overrides that could, for example, be used to replace all functions that have to query the backend so that if 
     // a backend other than elasticsearch were necessary, the rewrites there could make it possible
@@ -65,8 +92,8 @@ VERSION 0.2.0
       operator: "AND", // query operator param for the search box query params
       fuzzy: "*", // fuzzify the search box query params if they are simple strings. Can be * or ~ or if false it will not run
       
-      //default: false, - an example, setting to false overrides the defaults.default function below, which otherwise will build a search UI if not present
-      text: '', // the defaults.placeholder function defines the placeholder content of the .search box. It precedes that content with this value
+      //ui: false, - an example, setting to false overrides the defaults.ui function below, which otherwise will build a search UI if not present
+      text: 'search...', // the defaults.placeholder function defines the placeholder content of the .search box after a search executes. Before that, the search box starts with this value by default
       pushstate: true, // try pushing query state to browser URL bar or not
       executeonload: true, // run default search as soon as page loads
       sticky: false, // if sticky, the search bar should stick to the top when scrolling up
@@ -84,8 +111,8 @@ VERSION 0.2.0
       // actually in the case of APIs that there is already a use file for, this is unnecessary because that file must define the execute function, and can just use the noddy convert API url if necessary.
       // so may only be useful for on-the-fly demonstrations... could give xml API url, convert true, and fields to build results from...
 
-      display: {
-        // a set of functions to run after query ajax execution returns a result set
+      display: [
+        // a list of functions to run after query ajax execution returns a result set
         // by default execute runs "search" first, which shows results as search results and preps the response result data into 
         // defaults.records. It does this using defaults.record, which is how to format an individual record for display
         // to NOT use the default search display, just set options.record: false
@@ -97,25 +124,13 @@ VERSION 0.2.0
         // in this case, if display is a string it will load only the named display into the display options, or if a list then the listed displays
         // if display is an object as usual, only the ones specified in the object will be used, so specifically name those that you link from displays as well
         // or if displays is not defined or is an empty object (the default) then all linked displays will be used whether specified or not
-      },
-      displays: {}, // any options specific to a given display - if that display accepts specific options - can be provided here. Each display function shows its default options that it will populate this with
+      ],
+      displays: {} // any options specific to a given display - if that display accepts specific options - can be provided here. Each display function shows its default options that it will populate this with
 
-      after: { // define callback functions to run after other function (keyed by function name it should follow)
-        init: 'anything you would want to add to run after initialisation - note of executeonload is true (it is by default) then after.init will run before execute is called',
-        events: 'on init, binds events to the page - note this would run BEFORE any after.init function',
-        add: 'after adding something to query, which will have triggered an execute, but before the query executes',
-        remove: 'after removing something from query, which will have triggered an execute, but before the query executes',
-        execute: 'after anything causes a new query execution, this will run as soon as the query execution returns success. This is called before anything else, such as building displays, is done. At this point, options.paging and options.suggesting can be queried to decide what to do.',
-        error: 'after anything causes a new query execution, this will run on error. ',
-        render: 'after any query executes, the render write the query state to the page. This can be called after that process is complete',
-        search: 'after the first default search function completes, which also means the tidied options.records exists',
-        display: 'after a query executes and has triggered all options.display methods, this can be called to do anything else required'
-      }
-      
       // export TODO an export function that can open a link to a backend server that will give the current data or selection as json or csv
     };
 
-    defaults.ui = '<div class="{{options.class}} sticker"></div>  \
+    defaults.template = '<div class="{{options.class}} sticker"></div>  \
     <div class="{{options.class}} default sticky" style="z-index:1000000;"> \
       <div class="container-fluid" style="max-width:1000px;margin:0 auto 0px auto;padding:0px;"> \
         <div class="row"> \
@@ -124,17 +139,18 @@ VERSION 0.2.0
               <div class="panel-heading" style="background-color:white;padding:0px;"> \
                 <div class="input-group" style="margin-left:-1px;margin-top:-1px;margin-bottom:-6px;margin-right:-2px;"> \
                   <div class="input-group-btn"><a class="btn btn-default {{options.class}}" do="previous" alt="previous" title="previous" style="font-weight:bold;height:50px;font-size:1.8em;" href="#">&lt;</a></div> \
-                  <input type="text" class="form-control {{options.class}} search suggest" do="add" placeholder="search..." style="font-size:1.6em;height:50px;"> \
+                  <input type="text" class="form-control {{options.class}} search suggest" do="add" placeholder="{{options.text}}" style="font-size:1.6em;height:50px;"> \
                   <div class="input-group-btn"> \
                     <a href="#" class="btn btn-default {{options.class}} toggle" toggle=".options" alt="show/hide search options" title="show/hide search options" style="font-weight:bold;height:50px;font-size:1.8em;">+</a> \
                     <a class="btn btn-default {{options.class}}" do="next" alt="next" title="next" style="font-weight:bold;height:50px;font-size:1.8em;" href="#">&gt;</a> \
                   </div> \
                 </div> \
-                <div class="holder searches" style="margin-top:5px;"></div> \
+                <div class="{{options.class}} searches" style="margin-top:5px;"></div> \
               </div> \
-              <div class="panel-body section holder options" style="display:none;"> \
-                <div class="holder filters"></div> \
-                <div class="holder suggest"></div> \
+              <div class="panel-body section {{options.class}} options" style="display:none;"> \
+                <div class="{{options.class}} suggest"></div> \
+                <div class="{{options.class}} display filters"></div> \
+                <div class="{{options.class}} display range"></div> \
               </div> \
             </div> \
           </div> \
@@ -142,12 +158,12 @@ VERSION 0.2.0
       </div> \
     </div>';
 
-    defaults.default = function() {
+    defaults.ui = function() {
       // if there is no default UI area on the page for this to run against, append a simple default one
       if ( !$('.' + options.class + '.search').length ) {
         var hb = /\{\{options\.(.+?)\}\}/gi;
-        options.ui = options.ui.replace(hb, function(match, opt) { return dotindex(options,opt); });
-        obj.append(options.ui);
+        options.template = options.template.replace(hb, function(match, opt) { return dotindex(options,opt); });
+        obj.append(options.template);
         $('.'+options.class+'.search').bind('focus',function() { $('.'+options.class+'.options').show(); });
       }
       if ( $('.' + options.class + '.results').length === 0 && typeof options.record === 'function' ) {
@@ -160,9 +176,9 @@ VERSION 0.2.0
       }
     }
     defaults.events = function() {
-      if ( typeof options.suggest === 'function' ) $('.' + options.class + '.search.suggest').bindWithDelay('keyup',function(event) { options.suggest(event,$(this)); }, 500);
+      if ( typeof options.suggest === 'function' && $('.'+options.class+'.search.suggest').length ) $('.' + options.class + '.search.suggest').bindWithDelay('keyup',function(event) { options.suggest(event,$(this)); }, 500);
       // bind holder prev, next, from, to controllers (and any other functions that someone defines)
-      $(document).on('click', 'a.' + options.class + '[do]', function(event) { options[$(this).attr('do')](event,$(this)); } );
+      $(document).on('click', '.' + options.class + '[do]:not(input,textarea,select)', function(event) { options[$(this).attr('do')](event,$(this)); } );
       $(document).on('change', 'input.' + options.class + '[do]', function(event) { options[$(this).attr('do')](event,$(this)); } );
       $(document).on('change', 'textarea.' + options.class + '[do]', function(event) { options[$(this).attr('do')](event,$(this)); } );
       $(document).on('change', 'select.' + options.class + '[do]', function(event) { options[$(this).attr('do')](event,$(this)); } );
@@ -177,7 +193,6 @@ VERSION 0.2.0
       });
       if ( typeof options.scroller === 'function' ) options.scroller();
       if ( typeof options.sticker === 'function' ) options.sticker();
-      if ( typeof options.after.events === 'function' ) options.after.events();
     };
 
     // functions to be bound for paging the results
@@ -233,6 +248,7 @@ VERSION 0.2.0
       if (opts.attrs.href === undefined) opts.attrs.href = '#'; // note by default this is going to get overridden by a do action anyway
       if (opts.attrs.do === undefined) opts.attrs.do = 'add';
       if (opts.key !== undefined) opts.attrs.key = opts.key;
+      if (opts.val === undefined && opts.attrs.val === undefined && opts.text) opts.val = opts.text;
       if (opts.val !== undefined) opts.attrs.val = opts.val;
       if (opts.class === undefined) opts.class = 'holder link';
       var link = '<a class="' + opts.class + '" ';
@@ -275,22 +291,17 @@ VERSION 0.2.0
           if ( val.indexOf('options.') === 0 ) {
             // options pass-through
             if (val.indexOf(':') === -1) {
-              // this will even stringify functions that are requested - if not desired, just remove the replacer function on the stringify here.
-              // note it should not be a risk to expose any js onto the page anyway, because it could all be read by anyone viewing the source.
-              $('input.'+options.class+'.search').val("").attr('placeholder',JSON.stringify(dotindex(options,val.replace('options.','')),function (name, val) { if ( val && typeof val === 'function' ) {return '' + val;} else { return val; } } ));
+              var lk = dotindex(options,val.replace('options.',''));
+              console.log(lk);
+              var pl = JSON.stringify(lk,function (name, val) { if ( val && typeof val === 'function' ) {return '' + val;} else { return val; } } );
+              $('input.'+options.class+'.search').val("").attr('placeholder',pl);
             } else {
               var k = val.substring(8,val.indexOf(':')).replace(' ','');
               var v = val.substring(val.indexOf(':')+1).trim();
               try { v = $.parseJSON(v); } catch(err) {}
               dotindex(options,k,v);
-              // TODO if it was options.use or options.display, need to do the more complex method below, just before init - can be multiple extensions, and could be options.use:this,that
-              if ( k === 'use' ) {
-                // should probably do an options rerun of options.extend(['use']);
-              } else if ( k === 'display' ) {
-                // if the whole display param is being changed, rather than just removing one type of display by options.display.graph:false
-                // then should perhaps rerun options.extend(['display']);
-              }
-              options.execute(); // is it worth executing after all param changes? from and size would be useful, maybe anything in query. but all others too? - may as well...
+              if ( k === 'use' || k === 'display' ) options.extend();
+              options.execute();
             }
           } else {
             if (options.fuzzy) val = options.fuzzify(val, options.fuzzy);
@@ -299,7 +310,6 @@ VERSION 0.2.0
           }
         }
       }
-      if ( typeof options.after.add === 'function' ) options.after.add();
     }
     // this function should be bound to anything on the UI that removes something from the query
     // it should do whatever necessary to remove a part of the query and then run execute
@@ -311,7 +321,6 @@ VERSION 0.2.0
       th.remove(); // TODO should this look for a remove attribute to target a possible parent?
       options.query.from = 0;
       options.execute();
-      if ( typeof options.after.remove === 'function' ) options.after.remove();
     };
 
     defaults.suggesting = false; // just tracks the suggesting state
@@ -382,7 +391,8 @@ VERSION 0.2.0
         try { if ( options.query.query.filtered.filter.bool.must.length === 0 ) delete options.query.query.filtered.filter.bool.must; } catch(err) {}
         try { if ( JSON.stringify(options.query.query.filtered.filter.bool) === '{}' ) delete options.query.query.filtered.filter.bool; } catch(err) {}
         try { if ( JSON.stringify(options.query.query.filtered.filter) === '{}' ) delete options.query.query.filtered.filter; } catch(err) {}
-        try { if ( options.query.query.filtered.query.bool.must.length === 0 ) options.query.query.filtered.query.bool.must = [{"match_all":{}}]; } catch(err) {}              
+        try { if ( options.query.query.filtered.query.bool.must.length === 0 ) options.query.query.filtered.query.bool.must = [{"match_all":{}}]; } catch(err) {}
+        try { if ( options.query.query.filtered.query.bool.must.length > 1 && JSON.stringify(options.query.query.filtered.query.bool.must[0]) === '{"match_all":{}}' ) options.query.query.filtered.query.bool.must.splice(0,1) } catch(err) {}
       }
       // ABOVE do all the things that should update the actual query that we keep track of on options.query and need to know for future queries
       // THEN BELOW clone it and remove things that are not needed for the particular query being prepared, if any
@@ -405,8 +415,37 @@ VERSION 0.2.0
       return tq;
     };
 
+    defaults.success = function(resp) {
+      $('.' + options.class + '.loading').hide();
+      options.response = resp;
+      if ( options.suggesting ) {
+        options.suggest();
+      } else {
+        options.placeholder();
+        options.render(); // render the query params onto the page
+        if ( typeof options.review === 'function' ) options.review(options.response); // this is run first because it should also do record tidying
+        if ( typeof options.display === 'function' ) {
+          options.display(); // display could just be one function for most simple behaviour
+        } else if ( typeof options.display === 'object' ) {
+          for ( var d in options.display ) {
+            if ( typeof options.display[d] === 'function' ) options.display[d](obj);
+          }
+        }
+      }
+      options.suggesting = false; // reset ongoing actions
+      options.paging = false; // paging is assumed to be the same as a new query, so far. But we track that we are doing it, in case anything should behave differently because of it
+      // TODO consider should paging really be an increase to data available and a change to results, instead of treated as a new query?
+      if ( options.scroll && $(document).height() <= $(window).height() && $('.'+options.class+'.results').length ) options.next();
+    }
+    defaults.error = function(resp) {
+      $('.' + options.class + '.loading').hide();
+      $('.' + options.class + '.error').show(); // there is no error object by default, but any added will show here
+      console.log('Terribly sorry chappie! There has been an error when executing your query.');
+      console.log(resp);
+    }
     defaults.execute = function(event) {
-      // show the loading placeholder (although one is not defined by default, it can be added anywhere to the page)
+      // hide any prior shown error, and show the loading placeholder (although not defined by default, can be added anywhere to the page)
+      $('.' + options.class + '.error').hide();
       $('.' + options.class + '.loading').show();
       $('.' + options.class + '.search').attr('placeholder','searching...');
       var opts = {
@@ -414,37 +453,8 @@ VERSION 0.2.0
         cache: false,
         //contentType: "application/json; charset=utf-8",
         dataType: options.datatype,
-        success: function(resp) {
-          if ( typeof options.after.execute === 'function' ) options.after.execute();
-          $('.' + options.class + '.loading').hide();
-          options.response = resp;
-          if ( options.suggesting ) {
-            options.suggest();
-          } else {
-            options.placeholder();
-            options.render(); // render the query params onto the page
-            if ( typeof options.review === 'function' ) options.review(options.response); // this is run first because it should also do record tidying
-            if ( typeof options.display === 'function' ) {
-              options.display(); // display could just be one function for most simple behaviour
-            } else if ( typeof options.display === 'object' ) {
-              for ( var d in options.display ) {
-                if ( typeof options.display[d] === 'function' ) options.display[d](obj);
-              }
-            }
-            if ( typeof options.after.display === 'function' ) options.after.display();
-          }
-          options.suggesting = false; // reset ongoing actions
-          options.paging = false; // paging is assumed to be the same as a new query, so far. But we track that we are doing it, in case anything should behave differently because of it
-          // TODO consider should paging really be an increase to data available and a change to results, instead of treated as a new query?
-          if ( options.scroll && $(document).height() <= $(window).height() && $('.'+options.class+'.results').length ) options.next();
-        },
-        error: function(resp) {
-          $('.' + options.class + '.loading').hide();
-          $('.' + options.class + '.error').show(); // there is no error object by default, but any added will show here
-          if ( typeof options.after.error === 'function' ) options.after.error();
-          console.log('Terribly sorry chappie! There has been an error when executing your query.');
-          console.log(resp);
-        }
+        success: options.success,
+        error: options.error
       };
       var qr = options.qry(); // prepare the query, which sets the URL if necessary
       opts.url = options.url; // set the URL, which now has the query as a param, if necessary
@@ -457,8 +467,7 @@ VERSION 0.2.0
 
     defaults.placeholder = function() {
       // the text to put in the default search bar as placeholder text
-      var found = options.text.trim();
-      if (found.length) found += ' ';
+      var found = '';
       if (options.scroll) {
         found += options.query.size + options.query.from;
       //} else if (options.query.from !== 0) {
@@ -499,9 +508,9 @@ VERSION 0.2.0
           $('div.' + options.class + '.searches').append(bt);
         }
       }
-      if ( typeof options.after.render === 'function' ) options.after.render();
     };
 
+    defaults.records = [];
     defaults.record = function(rec,idx) {
       // the default way to format a record for display as a search result
       // NOTE this should not alter the record itself, that should be done by defaults.transform
@@ -537,6 +546,13 @@ VERSION 0.2.0
     };
     defaults.transform = function() {
       // TODO this should be the transform function necessary to make an individual record how it needs to be
+      // ACTUALLY there could be a default transform that runs unless specifically told not to, and then also 
+      // additional transforms, like the use and display approach. Then a use and a display could also define 
+      // and append transforms so we only have to run over the data once - they just define the transform in 
+      // their scope and then pass the transform name, and the function could be run by index(options,name)()
+      // ALSO consider this index approach for use and display themselves - it may be useful to nest uses and 
+      // displays in objects, so maybe instead of just checking that the immediate key is a function, should 
+      // check if index(options,key) is a function
     };
     defaults.review = function(data) {
       // the default way to display all records as a search result list
@@ -583,14 +599,13 @@ VERSION 0.2.0
           $('.' + options.class + '.results'+fromclass).append(options.record(rec,r));
         }
       }
-      if ( typeof options.after.search === 'function' ) options.after.search();
     }
     
     defaults.scroller = function() {
       $(window).scroll(function() {
         if (options.scroll === true) {
           if ( !options.paging && $(window).scrollTop() >= $(document).height() - $(window).height() * 1.2) options.next();
-        } else {
+        } else if (typeof options.scroll === 'string') {
           // TODO if it is a div ID or class set, then do the scroll on that div instead - also check elsewhere that scrolling may cause reloads etc
         }
       });
@@ -637,52 +652,65 @@ VERSION 0.2.0
       $(window).scroll(move);
     }
     
-    defaults.extend = function(which) {
-      if (which === undefined) which = ['options','use','display'];
-      if (which.indexOf('options') !== -1) options = $.extend(defaults, options);
-      if (which.indexOf('use') !== -1) {
-        if (typeof options.use === 'string') {
-          options.use = options.use.indexOf(',') !== -1 ? options.use.split(',') : [options.use];
-        }
-        if (options.use && options.use.length === 0) {
-          for ( var ou in $.fn.holder.use ) options.use.push(ou);
-        }
-        if ( options.use instanceof Array ) {
-          for ( var u in options.use ) {
-            if ( $.fn.holder.use[options.use[u]] !== undefined) options = $.extend(options, $.fn.holder.use[options.use[u]]);
-          }
+    var originals;
+    defaults.extend = function() {
+      if (originals === undefined) {
+        originals = options;
+        options = $.extend(defaults, options);
+      } else {
+        options = $.extend(defaults, originals);
+      }
+      if (typeof options.use === 'string') {
+        options.use = options.use.indexOf(',') !== -1 ? options.use.split(',') : [options.use];
+      }
+      if (options.use && options.use.length === 0) {
+        for ( var ou in $.fn.holder.use ) options.use.push(ou);
+      }
+      if ( options.use instanceof Array ) {
+        // what about uses that also have same-named display? add/remove them together? or leave to specific actions?
+        for ( var u in options.use ) {
+          if ( $.fn.holder.use[options.use[u]] !== undefined) options = $.extend(options, $.fn.holder.use[options.use[u]]);
         }
       }
-      if (which.indexOf('display') !== -1) {
-        if (typeof options.display === 'string') {
-          options.display = options.display.indexOf(',') !== -1 ? options.display.split(',') : [options.display];
-        }
-        if (options.display instanceof Array) {
-          var dl = options.display;
-          options.display = {};
-          for ( var o in dl ) {
-            if (typeof $.fn.holder.display[dl[o]] === 'function') options.display[dl[o]] = $.fn.holder.display[dl[o]];
+      if (typeof options.display === 'string') {
+        options.display = options.display.indexOf(',') !== -1 ? options.display.split(',') : [options.display];
+      }
+      if (options.display && options.display.length === 0) {
+        for ( var od in $.fn.holder.display ) options.display.push(od);
+      }
+      if (options.display instanceof Array) {
+        $('.'+options.class+'.display').remove();
+        var dl = options.display;
+        options.display = {};
+        for ( var o in dl ) {
+          if ($.fn.holder.display[dl[o]] !== undefined && typeof $.fn.holder.display[dl[o]] === 'function') {
+            options.display[dl[o]] = $.fn.holder.display[dl[o]];
+            if ( $.fn.holder.display[dl[o]].init && $.fn.holder.display[dl[o]].extend ) {
+              for ( var e in $.fn.holder.display[dl[o]].extend ) $.when( options[e] ).then(function() { $.fn.holder.display[dl[o]].extend[e](options); } );
+            }
           }
-        } else if ( options.display === undefined || JSON.stringify(options.display) === '{}' ) {
-          options.display = $.fn.holder.display;
         }
+      } else if (options.display === false) {
+        $('.'+options.class+'.display').remove(); 
+        // TODO if the above binds extensions to functions for a display, how to remove them on display change?
       }
     }
     defaults.extend();
     
     defaults.init = function() {
-      if (typeof options.default === 'function') options.default();
+      if (typeof options.ui === 'function') options.ui();
       if (typeof options.events === 'function') options.events();
       if ( $.params('source') ) options.query = $.params('source');
       if ( $.params('q') ) options.query.query.filtered.query.bool.must = [{"query_string": { "query": $.params('q') } } ];
       for ( var p in $.params() ) {
         if (p !== 'source' && p !== 'q') options[p] = $.params(p);
       }
-      if ( typeof options.after.init === 'function' ) options.after.init();
+      if (!options.executeonload) options.qry();
       if ( options.executeonload || JSON.stringify($.params()) !== "{}" ) options.execute();
     }
     
-    $.fn.holder.options = options; // make the options externally available
+    $.fn.holder.defaults = defaults;
+    $.fn.holder.options = options; // make the defaults and options externally available, for extension
     return this.each(function() {
       // anything else that must be done on all initialisations can go here. Anything that could be customised should go above in .init
       options.init();
@@ -690,7 +718,8 @@ VERSION 0.2.0
 
   };
 
-  // define options here then they are written to above, then they become available externally
+  // define things here to make them available externally
+  $.fn.holder.defaults = {};
   $.fn.holder.options = {};
   $.fn.holder.use = {};
   $.fn.holder.display = {};

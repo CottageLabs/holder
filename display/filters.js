@@ -3,7 +3,7 @@ $.fn.holder.display.filters = function(obj) {
   var options = obj.holder.options;
   if (options.paging) return; // when paging the results, filters don't change, and by default won't even get re-queried, so no point doing anything
   
-  if ( !$('.'+options.class+'.filters').length ) obj.prepend('<div class="' + options.class + ' filters"></div>');
+  if ( !$('.'+options.class+'.filters').length ) obj.prepend('<div class="' + options.class + ' display filters"></div>');
   if ( options.response && ( options.response.facets || options.response.aggs || options.response.aggregations ) ) {
     // assume an ES options.response exists, and extract facets from it
     // or do this as part of default, and just look for options.filters here?

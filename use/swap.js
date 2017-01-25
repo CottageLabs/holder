@@ -6,7 +6,7 @@ $.fn.holder.use.swap = {
   record:false,
   size:10000,
   display:['swap','filters','graph','sankey','scotland'],
-  fields: ['classification','gender','college','campus','disability','archive','situation','profilegrades','progresswhere', 'simd_quintile','progressions.1st_year_result','progressions.reg_1st_year','nationality','locale'],
+  fields: ['classification','gender','college','campus','disability','archive','situation','profilegrades','progresswhere', 'simd_quintile','progressions.1st_year_result','progressions.reg_1st_year','nationality','locale','date_of_birth','last_name'],
   facets: {
     archive: { terms: { field: "archive.exact", size: 100, order: "reverse_term" } },
     locale: { terms: { field: "locale.exact" } },
@@ -21,7 +21,9 @@ $.fn.holder.use.swap = {
     campus: { terms: { field: "campus.exact", "size": 100 } },
     course: { terms: { field: "course.exact", "size": 100 } },
     classification: { terms: { field: "classification.exact", "size": 100 } },
-    progression: { terms: { field: "progresswhere.exact", "size": 100 } }
+    progression: { terms: { field: "progresswhere.exact", "size": 100 } },
+    "date of birth": { terms: { field: "date_of_birth.exact", "size": 100 } },
+    "last name": { terms: { field: "last_name.exact", "size": 100 } }
   }  
 };
 

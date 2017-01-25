@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en">
+
+  <head>
+    <meta charset="utf-8">
+    <title>Holder docs</title>
+    <meta name="description" content="">
+    <meta name="author" content="Cottage Labs">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <link rel="stylesheet" href="//static.cottagelabs.com/bootstrap-3.0.3/css/bootstrap.min.css">
+  
+  </head>
+
+  <body>
+
+    <div class="container-fluid" style="max-width:1000px;margin:10px auto 10px auto;">
+      <div class="row">
+        <div id="holder" class="col-md-12">
+          <div class="jumbotron">
+            <h1>Holder v0.2.0 <br><small>by Mark MacGillivray, MIT Licence</small></h1>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+  
+</html>
+
+    var defaults = {
+      class: "holder", // the class name used to identify holder properties for this instance on the page - DO NOT include the .
+
+      url: 'http://localhost:9200/_search', // the URL to send the query to (followed by type and datatype for the query)
+      type: "GET", // NOTE that GET is the only supported ajax type at the moment
+      datatype: "JSONP",
+      
+      // define the starting query here - see ES docs. A filtered query is REQUIRED (empties are stripped for old ES compatibility)
+      defaultquery: {},
+      size: undefined, // size can be set on query start too, to save overwriting whole query (but "from" can't)
+      aggregations: undefined, // the aggregations can be defined separate from default query to save having to rewrite the whole thing
+      facets: undefined, // for older ES simplicity, facets can be defined too instead of aggregations
+      query: undefined, // this could be defined at startup if for some reason should be different from defaultquery
+      operator: "AND", // query operator param for the search box query params
+      fuzzy: "*", // fuzzify the search box query params if they are simple strings. Can be * or ~ or if false it will not run
+      
+      //default: false, - an example, setting to false overrides the defaults.default function below, which otherwise will build a search UI if not present
+      text: '', // the defaults.placeholder function defines the placeholder content of the .search box. It precedes that content with this value
+      pushstate: true, // try pushing query state to browser URL bar or not
+      executeonload: true, // run default search as soon as page loads
+      sticky: false, // if sticky, the search bar should stick to the top when scrolling up
+      bounce: false, // if true and sticky is false, whenever a search term is entered if the search bar is out of screen, scroll back up to it
+      scroll: false, // when results are scrolled to bottom retrieve the next set of results
+      // TODO make scroll able to take a div class or id to scroll on, instead of the document
+      
+      use: [], // list the names of use groups to extend options with. Or as string for just one name. If falsey, but use files have been linked from the html file, all present will be used
+      extract: 'hits.hits', // the dot notation to the part of the query execution result object that contains the records to use as results. Leave falsey if not necessary
+      // search: false, // example - see below for default function, which also does the default data cleaning, using the default extract value above to find records in a typical elasticsearch response
+      // record: function(rec) {}, // example, how to format a record - see below for default function. If false, the default search will run after execution to prep reords, but will not populate the screen
+      records: [], // where the cleaned records should be put after search
+
+      // convert: '', // TODO consider conversion of external xml API results, using noddy convert API to retrieve and convert the search URL, then build results from that. If so, this must affect the query execution ajax URL
+      // actually in the case of APIs that there is already a use file for, this is unnecessary because that file must define the execute function, and can just use the noddy convert API url if necessary.
+      // so may only be useful for on-the-fly demonstrations... could give xml API url, convert true, and fields to build results from...
+
+      display: {
+        // a set of functions to run after query ajax execution returns a result set
+        // by default execute runs "search" first, which shows results as search results and preps the response result data into 
+        // defaults.records. It does this using defaults.record, which is how to format an individual record for display
+        // to NOT use the default search display, just set options.record: false
+        // but then note, no processing of data into defaults.records will occur either, so this must be handled by the display functions
+        // alternatively, overwrite .search with your own data tidying method that just does not write to the page
+        // options.paging will still be set here, if it was set by a paging action
+        
+        // ALTERNATIVELY, if using the displays from the displays folder, just link them from the main page that calls this script
+        // in this case, if display is a string it will load only the named display into the display options, or if a list then the listed displays
+        // if display is an object as usual, only the ones specified in the object will be used, so specifically name those that you link from displays as well
+        // or if displays is not defined or is an empty object (the default) then all linked displays will be used whether specified or not
+      },
+      displays: {}, // any options specific to a given display - if that display accepts specific options - can be provided here. Each display function shows its default options that it will populate this with
+
+      after: { // define callback functions to run after other function (keyed by function name it should follow)
+        init: 'anything you would want to add to run after initialisation - note of executeonload is true (it is by default) then after.init will run before execute is called',
+        events: 'on init, binds events to the page - note this would run BEFORE any after.init function',
+        add: 'after adding something to query, which will have triggered an execute, but before the query executes',
+        remove: 'after removing something from query, which will have triggered an execute, but before the query executes',
+        execute: 'after anything causes a new query execution, this will run as soon as the query execution returns success. This is called before anything else, such as building displays, is done. At this point, options.paging and options.suggesting can be queried to decide what to do.',
+        error: 'after anything causes a new query execution, this will run on error. ',
+        render: 'after any query executes, the render write the query state to the page. This can be called after that process is complete',
+        search: 'after the first default search function completes, which also means the tidied options.records exists',
+        display: 'after a query executes and has triggered all options.display methods, this can be called to do anything else required'
+      }
+      
+      // export TODO an export function that can open a link to a backend server that will give the current data or selection as json or csv
+    };
+
+    defaults.ui = 'default html ui template';
+
+    defaults.default = function() // default starting function to build the default UI onto the page, if necessary / desired
+
+    defaults.events = function() // appends events to the page objects as required
+
+    defaults.paging = false; // paging previous, next, from, to functions
+    defaults.previous
+    defaults.next
+    defaults.from
+    defaults.to
+
+    // make a search link out of a string, for inclusion on the page, to trigger a search update
+    defaults.link = function(opts) 
+
+    // bind this to page elements that add / remove something to the search query
+    defaults.add = function(event,th)
+    defaults.remove = function(event,th)
+    
+    defaults.qry = function() { // prep the query and anything else needing doing to send the query (eg update the URL params)
+
+    // fuzzify the freetext search query terms with elasticsearch fuzzy match signifiers
+    defaults.fuzzify = function(querystr, fuzz)
+    
+
+    // execute the ajax search query (add username, password, apikey, x-apikey if available)
+    // on success do suggestion if suggesting otherwise call the default placeholder and render
+    // also call default review if it is still a function, to review the whole result data (which gets stored in .response)
+    // the default .review will also run default .record if a function, to show search results on screen
+    // then do .display if a function, or if object do all of them if functions, to add displays to the page
+    // on error show the error area
+    defaults.execute = function(event) 
+
+    // what to show as placeholder text in the default search box (after a query executes, this is usually a result / paging count)
+    defaults.placeholder = function() 
+
+    // after the query executes, render the current query to the page, so whatever is in it can be deselected
+    defaults.render = function() 
+
+    // the default way to display all records as a search result list
+    // this display function is always run first if it exists, and should put sanitised records in the options.records list too, for other display functions to use
+    defaults.review = function(data) 
+
+    // TODO this should be the transform function necessary to make an individual record how it needs to be
+    // ACTUALLY there could be a default transform that runs unless specifically told not to, and then also 
+    // additional transforms, like the use and display approach. Then a use and a display could also define 
+    // and append transforms so we only have to run over the data once - they just define the transform in 
+    // their scope and then pass the transform name, and the function could be run by index(options,name)()
+    // ALSO consider this index approach for use and display themselves - it may be useful to nest uses and 
+    // displays in objects, so maybe instead of just checking that the immediate key is a function, should 
+    // check if index(options,key) is a function
+    defaults.transform = function()
+
+    // the default way to format a record for display as a search result
+    // NOTE this should not alter the record itself, that should be done by defaults.transform
+    defaults.record = function(rec,idx)
+
+    defaults.suggesting = false;
+    defaults.suggestions = function(event,th) { // function to execute a query to get the suggestions for display    
+    defaults.suggest = function(data) { // what to do with the returned values after a suggestions query
+
+    // scroll results if scrolling is chosen - on hit page (or div) bottom execute .next and add results to the page
+    defaults.scroller = function() 
+
+    // if .bounce, whenever something is selected on screen to change and execute the query, bounce back up to the search bar if it is not on screen
+    defaults.bouncer = function(elem) 
+
+    // if .sticky, stick the search bar area to the top of the screen when scrolling beyond its natural screen location
+    // (and put it back when scrolling back up)
+    defaults.sticker = function() 
+
+    // extend the default options with the provided options, then with anything provided in .use and .display choices
+    defaults.extend = function(which) {
+
+    // the init function to call on jquery method init - by default it calls .default to build the default .ui
+    // then runs .events - then looks for query params and sets them into options, then if executeonload, executes initial query
+    defaults.init = function() {
+
+    // define options here then they are written to above, then they become available externally
+    $.fn.holder.options = {};
+    $.fn.holder.use = {};
+    $.fn.holder.display = {};
+    
+    // look up object items by dot notation, also set and delete them
+    function dotindex(ob, is, value, del) {
+
+    // function to bind change on delay, good for text search autosuggest
+    $.fn.bindWithDelay = function( type, data, fn, timeout, throttle ) 
+
+    // return all current url params, or named param
+
+    // ensure indexOf is available on older browsers
+    Array.prototype.indexOf = function(searchElement /*, fromIndex */ ) 
+
+

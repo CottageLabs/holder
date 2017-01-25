@@ -13,7 +13,7 @@
       <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
 
-    <script type="text/javascript" src="//static.cottagelabs.com/jquery-1.10.2.min.js"></script>  
+    <script type="text/javascript" src="//static.cottagelabs.com/jquery-1.10.2.min.js"></script>
     <script type="text/javascript" src="//static.cottagelabs.com/bootstrap-3.0.3/js/bootstrap.min.js"></script>
     <link rel="stylesheet" href="//static.cottagelabs.com/bootstrap-3.0.3/css/bootstrap.min.css">
 
@@ -21,19 +21,25 @@
 
     <script type="text/javascript" src="jquery.holder.js"></script>
     <script type="text/javascript" src="use/oabutton.js"></script>
-    <script type="text/javascript" src="display/filters.js"></script>
+    <script type="text/javascript" src="use/export.js"></script>
     <script type="text/javascript" src="display/line.js"></script>
-    <!--
-    <script type="text/javascript" src="display/sankey.js"></script>
     <script type="text/javascript" src="display/graph.js"></script>
+    <script type="text/javascript" src="display/export.js"></script>
+    <!--
+    <script type="text/javascript" src="display/filters.js"></script>
+    <script type="text/javascript" src="display/sankey.js"></script>
+    <script type="text/javascript" src="display/scotland.js"></script>
+
     <script type="text/javascript" src="use/swap.js"></script>
     <script type="text/javascript" src="use/cl/crossref.js"></script>
     <script type="text/javascript" src="use/cl/opendoar.js"></script>
-
-    <script type="text/javascript" src="display/scotland.js"></script>
     -->
 
     <style>
+      body {
+        color:#666;
+      }      
+
       /* this is necessary to make sankey flows work - link means the flow links between the bars. 
       change this to a more suitable name and decide how displays should include css and other things 
       like custom data cleaning */
@@ -97,18 +103,12 @@
         color:#555;
         padding:3px 6px 3px 6px;
       }
-      
+
       /* may be needed by line chart */
-      .line {
-        fill: none;
-        stroke: steelblue;
-        stroke-width: 1.5px;
+      line {
+        stroke-opacity: .15;
       }
 
-      body {
-        color:#666;
-      }
-      
     </style>
 
   </head>
@@ -128,7 +128,7 @@
   jQuery(document).ready(function() {
 
     $('#holder').holder();
-    
+
   });
   </script>
 

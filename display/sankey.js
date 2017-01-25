@@ -162,7 +162,7 @@ $.fn.holder.display.sankey = function(obj) {
 	}
 
   if ( !$('div.'+options.class+'.sankey').length ) {
-		obj.append('<div class="' + options.class + ' sankey" style="outline:1px solid #ccc;margin-top:20px;height:800px;padding-left:5px;padding-right:5px;"></div>');
+		obj.append('<div class="' + options.class + ' display sankey" style="outline:1px solid #ccc;margin-top:20px;height:800px;padding-left:5px;padding-right:5px;"></div>');
 		$('div.'+options.class+'.sankey').append('\
 			<div class="' + options.class +  ' sankeycontrols"></div> \
 			<svg class="' + options.class + ' sankey"></svg>'

@@ -49,7 +49,7 @@ $.fn.holder.display.graph = function(obj) {
 	}*/
 
   if ( !$('div.'+options.class+'.graph').length ) {
-		obj.append('<div class="' + options.class + ' graph" style="outline:1px solid #ccc;margin-top:20px;height:800px;padding-left:5px;padding-right:5px;"></div>');
+		obj.append('<div class="' + options.class + ' display graph" style="outline:1px solid #ccc;margin-top:20px;height:800px;padding-left:5px;padding-right:5px;"></div>');
 		$('div.'+options.class+'.graph').append('\
 			<div class="' + options.class +  ' graphcontrols"> \
 				<select class="form-control ' + options.class + ' graphcontrol graphwhat" style="width:200px;margin-top:5px;margin-bottom:5px;display:inline-block;"> \
@@ -99,7 +99,7 @@ $.fn.holder.display.graph = function(obj) {
 
     var keys = data.columns;
 
-    var z = keys.length < 10 ? d3.scaleOrdinal(d3.schemeCategory10) : d3.scaleOrdinal(d3.schemeCategory20c);
+    var fill = keys.length < 10 ? d3.scaleOrdinal(d3.schemeCategory10) : d3.scaleOrdinal(d3.schemeCategory20c);
 
     x0.domain(data.map(function(d) { return d[group]; }));
     x1.domain(keys).rangeRound([0, x0.bandwidth()]);
@@ -117,7 +117,7 @@ $.fn.holder.display.graph = function(obj) {
         .attr("y", function(d) { return y(d.value); })
         .attr("width", x1.bandwidth())
         .attr("height", function(d) { return height - y(d.value); })
-        .attr("fill", function(d) { return z(d.key); })
+        .attr("fill", function(d) { return fill(d.key); })
       .append("title")
         .text(function(d) { return d.key + "\n" + d.value; });
 
@@ -128,7 +128,7 @@ $.fn.holder.display.graph = function(obj) {
 
     g.append("g")
         .attr("class", "axis")
-        .call(d3.axisLeft(y).ticks(10, "s"));
+        .call(d3.axisLeft(y).ticks(10, "s").tickSize(-(width), 0, 0).tickSizeOuter(0));
 
     var legend = g.append("g")
         .attr("font-family", "sans-serif")
@@ -143,7 +143,7 @@ $.fn.holder.display.graph = function(obj) {
       .attr("x", width - 19)
       .attr("width", 19)
       .attr("height", 20)
-      .attr("fill", z);
+      .attr("fill", fill);
 
     legend.append("text")
       .attr("x", width - 24)
