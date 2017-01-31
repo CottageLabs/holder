@@ -177,6 +177,7 @@ VERSION 0.2.0
     }
     defaults.events = function() {
       if ( typeof options.suggest === 'function' && $('.'+options.class+'.search.suggest').length ) $('.' + options.class + '.search.suggest').bindWithDelay('keyup',function(event) { options.suggest(event,$(this)); }, 500);
+      if ( !$('.'+options.class+'.suggest').length && $('.' + options.class + '.search').length ) $('.holder.search').on('focus',function(e) { $('.holder.options').show(); });
       // bind holder prev, next, from, to controllers (and any other functions that someone defines)
       $(document).on('click', '.' + options.class + '[do]:not(input,textarea,select)', function(event) { options[$(this).attr('do')](event,$(this)); } );
       $(document).on('change', 'input.' + options.class + '[do]', function(event) { options[$(this).attr('do')](event,$(this)); } );
@@ -382,6 +383,7 @@ VERSION 0.2.0
       if (options.defaultquery.from === undefined) options.defaultquery.from = 0;
       if (options.defaultquery.size === undefined) options.size ? options.defaultquery.size = options.size : options.defaultquery.size = 10;
       if (options.defaultquery.fields === undefined && options.fields) options.defaultquery.fields = options.fields;
+      if ( options.sort && !options.defaultquery.sort ) options.defaultquery.sort = options.sort;
       if ( options.aggregations && !options.defaultquery.aggregations ) options.defaultquery.aggregations = options.aggregations;
       if ( options.aggs && !options.defaultquery.aggs ) options.defaultquery.aggs = options.aggs;
       if ( options.facets && !options.defaultquery.facets ) options.defaultquery.facets = options.facets;

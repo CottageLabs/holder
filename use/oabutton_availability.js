@@ -1,6 +1,6 @@
 
 $.fn.holder.use.oabutton = {
-  url: "https://api.openaccessbutton.org/requests",
+  url: "https://api.openaccessbutton.org/availabilities",
   pushstate: false,
   sticky:true,
   datatype: 'JSON',
@@ -24,7 +24,7 @@ $.fn.holder.use.oabutton = {
       }
     }
   },
-  fields: ['type','status','plugin','url','createdAt','title','doi','user.email','user.affiliation','user.profession','keywords','email','journal','issn','publisher']//,
+  fields:['url','plugin','username','createdAt','discovered.article']
   /*facets: {
     status: { terms: { field: "status.exact" } },
     type: { terms: { field: "type.exact" } },

@@ -176,6 +176,6 @@ $.fn.holder.display.line = function(obj) {
 // call to get those resources the first time the main display function above is called - see display/scotland.js for examples of that, 
 // where it retrieves additional map data on first pass
 $.fn.holder.display.line.init = false; 
-$.fn.holder.display.line.extend = {
+/*$.fn.holder.display.line.extend = {
 	execute: function(options) { console.log(options); }
-}
+}*/

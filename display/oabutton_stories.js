@@ -1,5 +1,5 @@
 
-$.fn.holder.display.filters = function(obj) {
+$.fn.holder.display.stories = function(obj) {
   var options = obj.holder.options;
   if (options.paging) return; // when paging the results, filters don't change, and by default won't even get re-queried, so no point doing anything
   

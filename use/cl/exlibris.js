@@ -4,12 +4,10 @@ $.fn.holder.use.exlibris = {
   url: "https://dev.api.cottagelabs.com/use/exlibris/primo",
   datatype: 'JSON',
   pushstate: false,
-  sticky:true,
-  scroll:true,
   extract:'data',
-  executeonload:false,
+  sticky:true,
   display:false,
-  defaultquery:{q:[],from:0,size:10},
+  defaultquery:{q:['a'],from:0,size:10},
   text: 'search Imperial exlibris. Start by providing a search term',
   
   placeholder: function() {
@@ -86,6 +84,7 @@ $.fn.holder.use.exlibris = {
         re += '<p style="font-weight:bold;color:red;">Available: ' + rec.library.collection + '</p>'
       }
     }
+    if (rec.creator) re += '<p>Creator: ' + options.link({text:rec.creator,val:'creator:'+rec.creator}) + '</p>';
     if (rec.contributor) {
       if (typeof rec.contributor === 'string') rec.contributor = rec.contributor.split(';');
       for ( var c in rec.contributor ) {
@@ -119,6 +118,49 @@ $.fn.holder.use.exlibris = {
     for ( var q in options.query.q ) {
       var btn = '<a style="margin:5px;" class="btn btn-default ' + options.class + '" do="remove" val="options.query.q.' + q + '"><b>X</b> ' + options.query.q[q] + '</a>';
       $('div.' + options.class + '.searches').append(btn);
+    }
+  },
+
+  review: function(data) {
+    var options = $(this).holder.options;
+    if (data === undefined) data = options.response;
+    var fromclass='.from' + options.query.from;
+    if (options.paging) {
+      $('.' + options.class + '.results').last().after('<div class="' + options.class + ' additional results ' + fromclass.replace('.','') + '" style="border:1px solid #ccc;"></div>');
+      if (!options.scroll) $('div.' + options.class + '.results').not(fromclass).hide();
+    } else {
+      options.records = [];
+      $('div.' + options.class + '.additional.results').remove();
+      $('div.' + options.class + '.results').show().html('');
+    }
+    var results = options.extract ? dotindex(data,options.extract) : data;
+    var buildfields = false;
+    if (!options.fields) {
+      options.fields = [];
+      buildfields = true; // is this worth doing by default?
+    }
+    for ( var r in results ) {
+      var rec = results[r];
+      if (rec.fields) rec = rec.fields;
+      if (rec._source) rec = rec._source;
+      for ( var f in rec ) { // is this loop worth doing by default?
+        if ( rec[f] instanceof Array && rec[f].length === 1) rec[f] = rec[f][0];
+        if ( rec[f] !== 0 && rec[f] !== false && !rec[f] ) rec[f] = "Not found";
+        if (buildfields && typeof rec[f] === 'string' && options.fields.indexOf(f) === -1) options.fields.push(f); // don't do anything clever with objects by default
+      }
+      options.records.push(rec);
+      if (typeof options.record === 'function') {
+        $('.' + options.class + '.results'+fromclass).append(options.record(rec,r));
+      }
+    }
+    $('.holder.filter').html("");
+    for ( var fl in data.facets) {
+      var disp = '<select style="margin-bottom:3px;" class="form-control holder" do="add"><option value="">filter by ' + fl + ':</option>';
+      for ( var fv in data.facets[fl] ) {
+        disp += '<option value="' + fv + '">' + fv + ' (' + data.facets[fl][fv] + ')</option>';
+      }
+      disp += '</select>';
+      $('.holder.filter').append(disp);
     }
   }
 

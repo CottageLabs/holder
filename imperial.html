@@ -19,19 +19,54 @@
 
     <script type="text/javascript" src="jquery.holder.js"></script>
     <script type="text/javascript" src="use/cl/exlibris.js"></script>
+    <script type="text/javascript" src="display/graph.js"></script>
 
   </head>
 
   <body>
 
     <div class="container-fluid" style="max-width:1000px;margin:10px auto 10px auto;">
-      <div class="row">
-        <div id="holder" class="col-md-12">
-          
+      <div id="holder">
+        <div class="row">
+          <div class="col-md-12">
+            <div class="holder sticker"></div>
+            <div class="container-fluid holder sticky" style="max-width:1000px;margin:0px auto 0px auto;background-color:white;z-index:10000000;">
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="panel panel-default">
+                    <div class="panel-heading panel-default" style="background-color:white;padding:0px;">
+                      <div class="input-group" style="margin-left:-1px;margin-top:-1px;margin-bottom:-6px;margin-right:-2px;">
+                        <div class="input-group-btn"><a class="btn btn-default holder" do="previous" alt="previous" title="previous" style="font-weight:bold;height:50px;font-size:1.8em;" href="#">&lt;</a></div>
+                        <input type="text" class="form-control holder search suggest" do="add" placeholder="Get started, provide a search term" style="font-size:1.6em;height:50px;">
+                        <div class="input-group-btn">
+                          <a href="#" class="btn btn-default holder toggle" toggle=".options" alt="show/hide search options" title="show/hide search options" style="font-weight:bold;height:50px;font-size:1.8em;">+</a>
+                          <a class="btn btn-default holder" do="next" alt="next" title="next" style="font-weight:bold;height:50px;font-size:1.8em;" href="#">&gt;</a>
+                        </div>
+                      </div>
+                      <div class="holder searches" style="margin-top:5px;"></div>
+                    </div>
+                    <div class="panel-body section holder options" style="display:none;">
+                      <div class="holder suggest"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+        
+        <div class="row" style="margin-top:10px;">
+          <div class="col-md-3">
+            <div class="holder filter" style="position:fixed;top:135px;width:230px;"></div>
+          </div>
+          <div class="col-md-9">
+            <div class="holder results from0" style="border:1px solid #ccc;"></div>
+          </div>
+        </div>        
       </div>
     </div>
   </body>
+  
   
   <script>
   jQuery(document).ready(function() {
